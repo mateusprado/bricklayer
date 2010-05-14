@@ -1,4 +1,0 @@
-<% form_for @machine, :url => run_virtual_machine_path(@machine), :method => :put do |f| %>
-	<%= hidden_field_tag :command, params[:command] %>
-	<%= submit_tag t("machines.commands.#{params[:command]}") %>
-<% end %>

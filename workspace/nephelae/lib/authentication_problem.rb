@@ -1,1 +1,0 @@
-class AuthenticationProblem < StandardError; end
