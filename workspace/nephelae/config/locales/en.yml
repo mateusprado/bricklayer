@@ -1,0 +1,151 @@
+en:
+  please_wait: "Please wait"
+  close_window: "Close window"
+  pre_install:
+    with_errors: "Some errors were detected"
+    installed: "Installation successful"
+    installed_details: "Your virtual machine was successfuly installed and you can access it through the IP address <em>{{address}}</em>."
+    installing: "Installing the virtual machine"
+    installing_details: "This process might take a while depending on your configuration"
+    setup: "Configuring you virtual machine's installation"
+    setup_error: "An error occured while configuring the installation. Please try again."
+    finishing: "Starting installation"
+  step: "{{current}} of {{total}}"
+  previous: "Previous step"
+  next: "Next step"
+
+  buttons:
+    create: Create
+
+  copyright:
+    company: "Copyright 1997-{{year}} Locaweb Serviços de Internet S/A."
+    terms: "Unauthorized reproduction is prohibited under penalty of law."
+
+  menu:
+    site: Locaweb Site
+    about_us: About us
+    feedback: Contact and terms
+    support: Support
+
+  machines:
+    your_machines: "Your machines ({{total}})"
+    creation_scheduled: "Your virtual machine was sent to the installation queue. Please wait."
+    not_found: "The virtual machine you requested wasn't found."
+    not_installed_yet: "The virtual machine you requested isn't installed yet. Please wait."
+    hdd: "<strong>{{size}}</strong> HDD"
+    memory: "<strong>{{size}}</strong> RAM"
+    more: "More"
+    console: "Open console"
+    status:
+      configuring: "Configuring"
+      installed: "Installed"
+      installing: "Installing"
+      error: "Error"
+
+  new_instance:
+    choose_your_image: "Choose your system image"
+    configure: "Configure your virtual machine"
+    confirm: "Confirm the configuration"
+    image: "Image"
+    memory: "Memory"
+    memory_ram: "<strong>{{size}}</strong> RAM memory"
+    password: "Password"
+    password_confirmation_hint: "Confirm your password"
+    password_hint: "This password will be used to access the instance"
+    processing: "Processing"
+    settings: "Settings"
+    start_instance: "Start instance"
+    storage: "Storage space"
+    storage_size: "<strong>{{size}}</strong> storage size"
+    terms: "I'm aware I'll be charged for the use of this virtual machine as long as it's running"
+    vcpus: "<strong>{{count}}</strong> vCPUs"
+
+  zones: Zones
+  zone_name: Zone Name
+  name: Name
+  priority: Priority
+  ip: IP Address
+  api_username: API Username
+  master: Master
+  password: Password
+
+  hosts: Hosts
+  host: Host
+  ssh_key_connecting: SSH Key Connecting
+
+  running: Running
+  stopped: Stopped
+  paused: Paused
+
+  new_zone: Create New Zone
+  edit: Edit
+  show: Show
+  insert: Insert
+
+  yep: Yes
+  nope: No
+
+  sections:
+    admin: Admin Area
+    new_zone: New Zone
+
+  activerecord:
+    attributes:
+      ip:
+        address: "IP Address"
+      virtual_machine:
+        account: Account
+        cpus: CPUs
+        hdd: Disk space
+        memory: Memory
+        name: Name
+        system_image: System Image
+        password: Password
+        status:
+          one: Status
+          other: Statuses
+          awaiting_validation: Awaiting validation
+          valid_zone: Zone validated
+          name_selected: Name selected
+          public_ip_selected: Public IP selected
+          invalid_setup: Invalid setup
+          not_created: Not created
+          template_selected: Template selected
+          deactivated: Deactivated
+          disks_deleted: Disks deleted
+          machine_deleted: Machine deleted
+          dhcp_data_deleted: DHCP data deleted
+          firewall_rules_deleted: Firewall rules deleted
+          ips_released: IPs released
+          zone_released: Zone released
+          uninstalled: Uninstalled
+          machine_created: Created
+          with_production_network: Production network defined
+          network_rate_limited: Network rated defined
+          mac_saved: MAC address saved
+          data_disk_added: Data disk added
+          dhcp_configured: DHCP configured
+          gateway_configured: Gateway configured
+          firewall_configured: Firewall configured
+          vm_started: Started
+          vm_booted: Booted
+          password_changed: Passwrod changed
+          template_files_cleaned: Template files cleaned
+          vm_ready: Ready
+          installed: Installed
+      host:
+        ip: IP
+    errors:
+      template:
+        header:
+          one: "Unable to save {{model}}: 1 error"
+          other: "Unable to save {{model}}: {{count}} errors."
+        body: "Please, make sure the following fields are properly filled:"
+      models:
+        virtual_machine:
+          exceeded_maximum_machines:
+            one: 'You can have only one machine'
+            other: 'You can have {{count}} machines at most'
+          exceeded_maximum_memory: 'You exceeded the maximum memory allocation allowed, which can be {{limit}} MB at most'
+          exceeded_maximum_hdd: 'You exceeded the maximum hdd allocation allowed, which can be {{limit}} GB at most'
+          exceeded_maximum_cpus: 'You exceeded the maximum cpu allocation allowed, which can be {{limit}} at most'

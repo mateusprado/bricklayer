@@ -1,0 +1,29 @@
+<% @section = t('sections.admin') %>
+
+<h3><%= t('processing_errors.title') %></h3>
+
+<table class="listing">
+	<theader>
+		<tr>
+			<th><%= t('processing_errors.consumer') %></th>
+			<th><%= t('processing_errors.error_message') %></th>
+			<th><%= t('processing_errors.queue_message') %></th>
+			<th><%= t('processing_errors.actions') %></th>
+		</tr>
+	</theader>
+	<tbody>
+		<% @processing_errors.each do |processing_error| %>
+			<tr>
+				<td><%=h processing_error.consumer %></td>
+				<td><%=h processing_error.error_message %></td>
+				<td><%=h processing_error.queue_message %></td>
+				<td>
+					<%= button_to t('processing_errors.retry'), retry_admin_processing_error_path(processing_error), :method => :put %>
+					<%= button_to t('processing_errors.delete'), admin_processing_error_path(processing_error), :method => :delete %>
+				</td>
+			</tr>
+		<% end %>
+	</tbody>
+</table>
+
+

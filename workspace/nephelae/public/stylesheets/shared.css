@@ -1,0 +1,141 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: #ebeded;
+    font-family: "Lucida Grande", Arial, sans-serif;
+    font-size: 12px;
+    padding-bottom: 40px;
+    text-align: center;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: Helvetica, Arial, sans-serif;
+}
+
+.hidden {
+    display: none !important;
+}
+
+ul, ol {
+    padding: 10px 0 10px 10px;
+}
+
+#header h1 a {
+    background: url(../images/locaweb.png) no-repeat;
+    display: block;
+    height: 26px;
+    text-indent: -9999px;
+    width: 116px;
+}
+
+#header h2 a {
+    color: #666;
+    font-size: 30px;
+    font-weight: normal;
+    letter-spacing: -1px;
+    text-decoration: none;
+}
+
+#page, #footer {
+    margin: 0 auto;
+    text-align: left;
+    width: 770px;
+}
+
+#footer {
+    color: #888;
+    font-size: 10px;
+    padding: 10px 0;
+}
+
+#page {
+    border: 1px solid #ddd;
+}
+
+/* breadcrumbs */
+.breadcrumbs {
+    background: url(../images/home.png) no-repeat left center;
+    list-style: none;
+    padding-left: 10px;
+    position: absolute;
+    right: 20px;
+    top: 85px;
+}
+
+.breadcrumbs li {
+    float: left;
+    padding-left: 10px;
+}
+
+.breadcrumbs li:after {
+    content: "»";
+    color: #838383;
+    margin-left: 10px;
+}
+
+.breadcrumbs a {
+    color: #838383;
+    text-decoration: none;
+}
+
+.breadcrumbs a:hover {
+    text-decoration: underline;
+}
+
+.breadcrumbs .last a {
+    color: #444;
+    font-weight: bold;
+}
+
+.breadcrumbs .last:after {
+    content: "";
+}
+
+/* content */
+#content {
+    overflow: auto;
+}
+
+/* main */
+#main {
+    float: right;
+    padding: 20px 20px 20px 0;
+    width: 730px;
+}
+
+#main h3 {
+    border-bottom: 1px solid #e3e3e3;
+    color: #575757;
+    font-size: 24px;
+    font-weight: normal;
+    margin-bottom: 20px;
+    padding: 0 0 3px 5px;
+}
+
+/* sidebar */
+#sidebar {
+    padding: 10px 0;
+    width: 196px;
+}
+
+/* menu */
+#menu {
+    list-style: none;
+    padding: 0;
+}
+
+#menu li {
+    margin: 5px 0;
+}
+
+#menu a {
+    color: #3c3f3f;
+    display: block;
+    height: 30px;
+    line-height: 30px;
+    padding-left: 10px;
+    text-decoration: none;
+}

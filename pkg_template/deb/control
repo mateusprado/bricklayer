@@ -1,0 +1,13 @@
+Source: {{ name }}
+Section: internal_applications
+Priority: extra
+Maintainer: {{ username }} <{{email}}>
+Build-Depends: {{ deps }}
+Standards-Version: {{ version }}
+Homepage: {{ git_url }}
+
+Package: {{ name }}
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: <insert up to 60 chars description>
+ <insert long description, indented with spaces>

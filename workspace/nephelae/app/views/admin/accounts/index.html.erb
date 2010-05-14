@@ -1,0 +1,39 @@
+<% @section = t('sections.admin') %>
+
+<h3><%= t('accounts.title') %></h3>
+
+<div class="large-button">
+  <%= link_to t('accounts.new'), new_admin_account_path %>
+</div>
+
+<table class="listing">
+	<thead>
+		<tr>
+			<th><%= t('accounts.login') %></th>
+			<th><%= t('accounts.maximum_machine_count') %></th>
+			<th><%= t('accounts.maximum_memory') %></th>
+			<th><%= t('accounts.maximum_hdd') %></th>
+			<th><%= t('accounts.maximum_cpus') %></th>
+			<th><%= t('accounts.actions') %></th>
+		</tr>
+	</thead>		
+	<tbody>
+		<% for account in @accounts %>
+			<tr>
+				<td><%=h account.login %></td>
+				<td><%=h account.maximum_machine_count %></td>
+				<td><%=h account.maximum_memory %></td>
+				<td><%=h account.maximum_hdd %></td>
+				<td><%=h account.maximum_cpus %></td>
+				<td>
+					<%= link_to t('accounts.show'), admin_account_path(account) %>
+				    <%= link_to t('accounts.edit'), edit_admin_account_path(account) %>
+					<%= button_to t('accounts.access'), access_admin_account_path(account), :method => :put %>
+				</td>
+			</tr>
+		<% end %>
+	</tbody>
+</table>
+
+
+

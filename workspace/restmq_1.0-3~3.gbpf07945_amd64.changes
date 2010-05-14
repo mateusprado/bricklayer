@@ -1,0 +1,33 @@
+Format: 1.8
+Date: Wed, 12 May 2010 00:19:18 -0300
+Source: restmq
+Binary: restmq
+Architecture: source amd64
+Version: 1.0-3~3.gbpf07945
+Distribution: UNRELEASED
+Urgency: low
+Maintainer: <>
+Changed-By: root <root@debian.localdomain>
+Description: 
+ restmq     - <insert up to 60 chars description>
+Changes: 
+ restmq (1.0-3~3.gbpf07945) UNRELEASED; urgency=low
+ .
+   ** SNAPSHOT build @f079451401a1800672c484f7c0460a126097074c **
+ .
+   [ Gleicon Moraes ]
+   * node.js endpoint testbed
+ .
+   [ root ]
+Checksums-Sha1: 
+ 912ab1ca2d2ea6c72354cf8c0239f4e4f08b5410 430 restmq_1.0-3~3.gbpf07945.dsc
+ c164411909f46c22826e628ce2350a1f3fc70c48 282259 restmq_1.0-3~3.gbpf07945.tar.gz
+ 51d4145cad8acb80fb9ab8f68cde91baa9c772b9 1126 restmq_1.0-3~3.gbpf07945_amd64.deb
+Checksums-Sha256: 
+ 6562de489e52fc4bf32a540e0e90414da1e2c6b49482d0e4adc0fc0e12a830d2 430 restmq_1.0-3~3.gbpf07945.dsc
+ aadf5f19f7e8ae3a45176fa05ab541a9a1f95d5c48a37fbe08f032c404bc26ea 282259 restmq_1.0-3~3.gbpf07945.tar.gz
+ 5f888a78432f442f9fb0f8bbb88aa67df677e85cce49ebacce5c31f55be6cc2b 1126 restmq_1.0-3~3.gbpf07945_amd64.deb
+Files: 
+ f0eac049117fbee233e28d9f5d89f781 430 internal_applications extra restmq_1.0-3~3.gbpf07945.dsc
+ b63794dc3caf79b4d3a099a45bf5b851 282259 internal_applications extra restmq_1.0-3~3.gbpf07945.tar.gz
+ bb1ce8d547fd464c98392a7bff7bbea7 1126 internal_applications extra restmq_1.0-3~3.gbpf07945_amd64.deb

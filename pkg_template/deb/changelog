@@ -1,0 +1,6 @@
+{{ name }} ({{ version }}) testing; urgency=low
+
+  * Initial release 
+
+ -- {{ username }} <{{ email }}>  {{ date }}
+

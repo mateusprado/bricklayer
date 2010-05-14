@@ -1,0 +1,12 @@
+<%
+rerun_dir =  File.join(File.expand_path(File.dirname(__FILE__)), 'features', 'output')
+FileUtils.mkdir_p(rerun_dir) unless File.directory?(rerun_dir)
+
+rerun_file = File.join(rerun_dir, 'rerun.txt')
+rerun = File.file?(rerun_file) ? IO.read(rerun_file) : ""
+
+rerun_opts = rerun.to_s.strip.empty? ? "--format progress features" : "--format #{ENV['CUCUMBER_FORMAT'] || 'pretty'} #{rerun}"
+std_opts = "#{rerun_opts} --format rerun --out #{rerun_file} --strict --tags ~@wip"
+%>
+default: <%= std_opts %>
+wip: --tags @wip:3 --wip features

@@ -1,0 +1,8 @@
+<% vms.each do |vm| %>
+# <%= vm.name %>
+host <%= vm.uuid %> {
+	hardware ethernet <%= vm.mac %>;
+	fixed-address <%= vm.private_ip.address %>;
+	option host-name \"<%= vm.name %>\";
+}
+<% end %>

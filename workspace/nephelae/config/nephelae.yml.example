@@ -1,0 +1,83 @@
+# Nephelae main configuration file
+common: &DEFAULTS
+  production_network: "Production"  
+  scripts_path: app/scripts
+  templates_path: app/templates
+  vm_startup_time: 300
+  vm_ssh_wait_time: 15
+  graph_dimensions:
+    :width: 600
+    :height: 150
+  graph_colors:
+    - "#FFAA00"
+    - "#1240AB"
+    - "#0000FF"
+    - "#FF0000"
+  graph_color_pairs:
+    - - "#FFAA00"
+      - "#1240AB"
+    - - "#00AAFF"
+      - "#AB4012"
+  opened_ports:
+    - 22
+    - 21
+    - 80
+    - 3389
+  admin:
+    :user: locaweb
+    :password: locaweb1020
+  broker:
+    :hosts: 
+    - :host: localhost
+      :login: nephelae
+      :passcode: nephelae123
+      :port: 61612
+      :ssl: true
+    - :host: localhost
+      :login: nephelae
+      :passcode: nephelae123
+      :port: 61613
+      :ssl: false
+    :initial_reconnect_delay: 5
+    :randomize: false
+    :use_exponential_back_off: false
+    :max_reconnect_attempts: 0
+    :backup: false
+    :max_reconnect_delay: 10.0
+    :timeout: -1
+    :back_off_multiplier: 2
+  cas_base_url: https://auth.fabrica.locaweb.com.br
+
+development:
+  <<: *DEFAULTS
+  server_registry: http://10.11.0.15/seam/resource/ws
+  error_recipients: 
+    - nobody@locaweb.com.br
+
+production:
+  <<: *DEFAULTS
+  nagios_wsdl: http://monitoracao.locaweb.com.br/webserviceNagios/nusoap/server.php?wsdl
+  server_registry: https://infraestrutura.locaweb.com.br/seam/resource/ws
+  cas_base_url: https://auth.locaweb.com.br
+  error_recipients:
+    - cloud-dev@locaweb.com.br
+
+test: &TEST
+  <<: *DEFAULTS
+  scripts_path: spec/scripts
+  templates_path: spec/templates
+  vm_startup_time: 0.2
+  nagios_wsdl: wsdl
+  server_registry: http://localhost:9999/seam/resource/ws
+  broker: {}
+  error_recipients:
+    - nobody@locaweb.com.br
+
+cucumber:
+  <<: *DEFAULTS
+  queue_server:
+    :start_script: /opt/apache-activemq-5.3.0/bin/activemq
+    :database_dir: /opt/apache-activemq-5.3.0/data
+  server_registry: http://10.11.0.15/seam/resource/ws
+  error_recipients:
+    - nobody@locaweb.com.br

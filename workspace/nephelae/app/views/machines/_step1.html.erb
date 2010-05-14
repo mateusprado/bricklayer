@@ -1,0 +1,21 @@
+<div id="step1" class="step">
+	<h3><%= t("new_instance.choose_your_image") %></h3>
+	<p class="step-counter"><%= t("step", :current => 1, :total => 3) %></p>
+	<div id="scroller">
+		<div id="images">
+			<% for image in @images %>
+				<div id="vm-<%= image.id %>" class="vm-image <%= image.code %>">
+					<dl>
+						<dt>
+							<%= h image.name %>
+							<% if image.architecture == 64 %>
+								<span>64-bit</span>
+							<% end %>
+						</dt>
+						<dd><%= h image.description %></dd>
+					</dl>
+				</div>
+			<% end %>
+		</div>
+	</div>
+</div>

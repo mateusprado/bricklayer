@@ -1,0 +1,48 @@
+<html>
+	<head>
+		<link type="text/css" rel="stylesheet" href="lib/jspec.css" />
+		<!-- Load Cloud libraries -->
+		<script src="../public/javascripts/jquery-1.3.2.js"></script>
+		<script src="../public/javascripts/i18n.js"></script>
+		<script src="../public/javascripts/application.js"></script>
+
+		<!-- Load JSpec libraries -->
+		<script src="lib/jspec.js"></script>
+		<script src="lib/jspec.jquery.js"></script>
+		<script src="lib/jspec.xhr.js"></script>
+
+		<!-- Load JSpec Growl: Create a symlink to your own path -->
+		<script src="lib/growl/jspec.growl.js"></script>
+
+		<script>
+			function runSuites() {
+				var runner = JSpec
+				.exec('application.spec')
+
+				var suite = JSpec.suites[0];
+
+				// Set a global before
+				suite.addHook("before", function(){
+					$("#sample").empty();
+				});
+
+				// Set a global after
+				suite.addHook("after", function(){
+					$("#sample").empty();
+				});
+
+				if (JSpec.formatters.Growl) {
+					runner.run({ formatter: JSpec.formatters.Growl, url: "http://localhost/jspec-growl/" }).report();
+				} else {
+					runner.run().report();
+				}
+			}
+		</script>
+	</head>
+	<body class="jspec" onLoad="runSuites();">
+		<div id="jspec-top"><h2 id="jspec-title">JSpec <em><script>document.write(JSpec.version)</script></em></h2></div>
+		<div id="jspec"></div>
+		<div id="jspec-bottom"></div>
+		<div id="sample"></div>
+	</body>
+</html>

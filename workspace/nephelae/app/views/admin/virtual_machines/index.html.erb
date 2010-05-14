@@ -1,0 +1,35 @@
+<% @section = t('sections.admin') %>
+
+<h3><%= t('machines.title') %></h3>
+
+<table class="listing">
+	<thead>
+		<tr>
+			<th><%= t('machines.uuid') %></th>
+			<th><%= t('machines.name') %></th>
+    		<th><%= t('machines.status.title') %></th>
+			<th><%= t('machines.private_ip') %></th>
+			<th><%= t('machines.public_ip') %></th>
+			<th><%= t('zones.title') %></th>
+			<th><%= t('machines.actions') %></th>
+		</tr>
+	</thead>		
+	<tbody>
+		<% each_paginate @virtual_machines do |vm, i| %>
+			<tr>
+				<td><%=h vm.uuid %></td>
+				<td><%=h vm.name %></td>
+				<td><%=h vm.status %></td>
+				<td><%=h vm.private_ip %></td>
+				<td><%=h vm.public_ip %></td>
+				<td><%=h vm.zone.try(:name) %></td>
+				<td>
+					<%= link_to t('machines.show'), admin_virtual_machine_path(vm) %>
+				    <%= link_to t('machines.edit'), edit_admin_virtual_machine_path(vm) %>
+				</td>
+			</tr>
+		<% end %>
+	</tbody>
+</table>
+
+<%= paginate @virtual_machines, admin_virtual_machines_path %>

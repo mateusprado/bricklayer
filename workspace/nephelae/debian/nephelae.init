@@ -1,0 +1,159 @@
+#! /bin/sh
+#
+# skeleton	example file to build /etc/init.d/ scripts.
+#		This file should be used to construct scripts for /etc/init.d.
+#
+#		Written by Miquel van Smoorenburg <miquels@cistron.nl>.
+#		Modified for Debian
+#		by Ian Murdock <imurdock@gnu.ai.mit.edu>.
+#               Further changes by Javier Fernandez-Sanguino <jfs@debian.org>
+#
+# Version:	@(#)skeleton  1.9  26-Feb-2001  miquels@cistron.nl
+#
+### BEGIN INIT INFO
+# Provides:          nephelae
+# Required-Start:    $network $local_fs
+# Required-Stop:
+# Should-Start:      $named
+# Should-Stop:
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: <Enter a short description of the sortware>
+# Description:       <Enter a long description of the software>
+#                    <...>
+#                    <...>
+### END INIT INFO
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+NAME=nephelae
+DESC=nephelae
+APP_DIR=/var/www/$NAME
+LOGDIR=/var/log/nephelae
+PIDFILE=/var/run/$NAME.pid
+DODTIME=1                   # Time to wait for the server to die, in seconds
+                            # If this value is set too low you might not
+                            # let some servers to die gracefully and
+                            # 'restart' will not work
+
+# Include nephelae defaults if available
+if [ -f /etc/default/nephelae ] ; then
+    . /etc/default/nephelae
+fi
+
+set -e
+
+running_pid()
+{
+    # Check if a given process pid's cmdline matches a given name
+    pid=$1
+    name=$2
+    [ -z "$pid" ] && return 1
+    [ ! -d /proc/$pid ] &&  return 1
+    cmd=`cat /proc/$pid/cmdline | tr "\000" "\n"|head -n 1 |cut -d : -f 1`
+    # Is this the expected child?
+    [ "$cmd" != "$name" ] &&  return 1
+    return 0
+}
+
+running()
+{
+# Check if the process is running looking at /proc
+# (works for all users)
+
+    # No pidfile, probably no daemon present
+    pid_files="nephelae-dhcp.pid nephelae-installer.pid nephelae-template_cloner.pid nephelae-firewall_manager.pid nephelae-snapshot_manager.pid nephelae-vnc_proxy.pid nephelae-installation_setup.pid nephelae-state_manager.pid"
+    running=0
+    for pid_file in $pid_files 
+    do
+        if [ ! -f "/tmp/$pid_file" ]; then
+		let running+=1
+	fi
+    done
+
+    # Obtain the pid and check it against the binary name
+    return $running
+}
+
+force_stop() {
+	cd $APP_DIR
+	rake nephelae:consumers:stop:all
+}
+
+start() {
+	cd $APP_DIR
+	RAILS_ENV=production rake nephelae:consumers:start:all
+}
+
+stop() {
+	cd $APP_DIR
+	rake nephelae:consumers:stop:all
+}
+
+case "$1" in
+  start)
+        echo -n "Starting $DESC: "
+	start
+        if running ; then
+            echo "$NAME."
+        else
+            echo " ERROR."
+        fi
+        ;;
+  stop)
+        echo -n "Stopping $DESC: "
+	cd $APP_DIR
+	stop
+        echo "$NAME."
+        ;;
+  force-stop)
+        echo -n "Forcefully stopping $DESC: "
+        force_stop
+        if ! running ; then
+            echo "$NAME."
+        else
+            echo " ERROR."
+        fi
+        ;;
+  #reload)
+        #
+        # If the daemon can reload its config files on the fly
+        # for example by sending it SIGHUP, do it here.
+        #
+        # If the daemon responds to changes in its config file
+        # directly anyway, make this a do-nothing entry.
+        #
+        # echo "Reloading $DESC configuration files."
+        # start-stop-daemon --stop --signal 1 --quiet --pidfile \
+        #       /var/run/$NAME.pid --exec $DAEMON
+  #;;
+  force-reload)
+        #
+        # If the "reload" option is implemented, move the "force-reload"
+        # option to the "reload" entry above. If not, "force-reload" is
+        # just the same as "restart" except that it does nothing if the
+        # daemon isn't already running.
+        # check wether $DAEMON is running. If so, restart
+        ;;
+  restart)
+    echo -n "Restarting $DESC: "
+	stop
+	start
+        ;;
+  status)
+    echo -n "$LABEL is "
+    if running ;  then
+        echo "running"
+    else
+        echo " not running."
+        exit 1
+    fi
+    ;;
+  *)
+    N=/etc/init.d/$NAME
+    # echo "Usage: $N {start|stop|restart|reload|force-reload}" >&2
+    echo "Usage: $N {start|stop|restart|force-reload|status|force-stop}" >&2
+    exit 1
+    ;;
+esac
+
+exit 0

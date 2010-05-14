@@ -1,0 +1,34 @@
+<% @section = t('sections.admin') %>
+
+<h3><%= t('zones.title') %></h3>
+
+<div class="large-button">
+  <%= link_to t('zones.new'), new_admin_zone_path %>
+</div>
+
+<table class="listing">
+	<thead>
+		<tr>
+			<th><%= t('zones.name') %></th>
+			<th><%= t('zones.number') %></th>
+			<th><%= t('hosts.ip') %></th>
+			<th><%= t('zones.actions') %></th>
+		</tr>
+	</thead>		
+	<tbody>
+		<% for zone in @zones %>
+			<tr>
+				<td><%=h zone.name %></td>
+				<td><%=h zone.number %></td>
+				<td><%=h zone.master.ip %></td>
+				<td>
+					<%= link_to t('zones.show'), admin_zone_path(zone) %>
+				    <%= link_to t('zones.edit'), edit_admin_zone_path(zone) %>
+				</td>
+			</tr>
+		<% end %>
+	</tbody>
+</table>
+
+
+

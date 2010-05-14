@@ -1,0 +1,7 @@
+<% title t("titles.dashboard") %>
+
+<h3><%= t("machines.your_machines", :total => @machines.size) %></h3>
+
+<table id="vms">
+	<%= render :partial => "machine", :collection => @machines %>
+</table>

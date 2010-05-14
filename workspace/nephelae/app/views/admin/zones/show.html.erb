@@ -1,0 +1,28 @@
+<% @section = t('sections.admin') %>
+
+<h3><%= t('hosts.title') %></h3>
+
+<table class="listing">
+	<thead>
+		<tr>
+			<th><%= t('hosts.name') %></th>
+			<th><%= t('hosts.ip') %></th>
+			<th><%= t('hosts.username') %></th>
+			<th><%= t('hosts.master') %></th>
+			<th><%= t('hosts.ssh_key_connecting') %></th>
+		</tr>
+	</thead>		
+	<tbody>
+		<% for host in @zone.hosts %>
+			<tr>
+				<td><%= host.name %></td>
+				<td><%= host.ip %></td>
+				<td><%= host.username %></td>
+				<td><%= host.master? ? t(:yep) : t(:nope) %></td>
+				<td>
+					<img src="/images/working_<%= host.ssh_key_connecting %>.gif" alt="working? <%= host.ssh_key_connecting %>" />
+				</td>
+			</tr>
+		<% end %>
+	</tbody>
+</table>

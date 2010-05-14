@@ -1,0 +1,12 @@
+<h3><%= t('snapshots.creation') %></h3>
+
+<% form_for @snapshot, :url => virtual_machine_snapshots_path(@machine) do |f| %>
+    <p>
+		<%= f.label :name %>
+		<%= f.text_field :name %>
+	</p>
+	<p class="submit">
+		<%= submit_tag t('snapshots.create') %>
+		<%= link_to t('cancel'), virtual_machine_path(@machine) %>
+	</p>
+<% end %>

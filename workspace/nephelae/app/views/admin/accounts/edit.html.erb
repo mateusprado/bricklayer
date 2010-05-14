@@ -1,0 +1,34 @@
+<% @section = t("sections.new_account") %>
+
+<% form_for :account, @account, :url => admin_account_path(@account), :html => { :method => :put } do |f| %>
+	<%= f.error_messages %>
+	<fieldset class="account admin-form">
+    	<legend><%=h t('accounts.single_title') %></legend>
+		<p>
+	    	<%= f.label :login %>
+		    <%= f.text_field :login %>
+		</p>
+		<p>
+	    	<%= f.label :maximum_machine_count %>
+		    <%= f.text_field :maximum_machine_count %>
+		</p>
+		<p>
+	    	<%= f.label :maximum_memory %>
+		    <%= f.text_field :maximum_memory %>
+		</p>
+		<p>
+	    	<%= f.label :maximum_hdd %>
+		    <%= f.text_field :maximum_hdd %>
+		</p>
+		<p>
+	    	<%= f.label :maximum_cpus %>
+		    <%= f.text_field :maximum_cpus %>
+		</p>
+		
+	</fieldset>
+    
+	<p class="submit">
+		<%= submit_tag t('accounts.save') %>
+		<%= link_to t('cancel'), admin_accounts_path %>
+	</p>
+<% end %>

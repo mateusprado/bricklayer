@@ -1,0 +1,58 @@
+<% @section = t('sections.admin') %>
+
+<h3><%= t('accounts.single_title') %></h3>
+
+<fieldset class="account admin-form">
+	<legend><%=h t('accounts.single_title') %></legend>
+	<p>
+    	<label><%= t('accounts.login') %></label>
+	    <%=h @account.login %>
+	</p>
+	<p>
+    	<label><%= t('accounts.maximum_machine_count') %></label>
+	    <%=h @account.maximum_machine_count %>
+	</p>
+	<p>
+    	<label><%= t('accounts.maximum_memory') %></label>
+	    <%=h @account.maximum_memory %>
+	</p>
+	<p>
+    	<label><%= t('accounts.maximum_hdd') %></label>
+	    <%=h @account.maximum_hdd %>
+	</p>
+	<p>
+    	<label><%= t('accounts.maximum_cpus') %></label>
+	    <%=h @account.maximum_cpus %>
+	</p>
+</fieldset>
+
+<h3><%= t('machines.title') %></h3>
+<table class="listing">
+	<thead>
+		<tr>
+			<th><%= t('machines.uuid') %></th>
+			<th><%= t('machines.name') %></th>
+    		<th><%= t('machines.status.title') %></th>
+			<th><%= t('machines.private_ip') %></th>
+			<th><%= t('machines.public_ip') %></th>
+			<th><%= t('zones.title') %></th>
+			<th><%= t('machines.actions') %></th>
+		</tr>
+	</thead>		
+	<tbody>
+		<% for vm in @account.virtual_machines %>
+			<tr>
+				<td><%=h vm.uuid %></td>
+				<td><%=h vm.name %></td>
+				<td><%=h vm.status %></td>
+				<td><%=h vm.private_ip %></td>
+				<td><%=h vm.public_ip %></td>
+				<td><%=h vm.zone.name %></td>
+				<td>
+					<%= link_to t('machines.show'), admin_virtual_machine_path(vm) %>
+				    <%= link_to t('machines.edit'), edit_admin_virtual_machine_path(vm) %>
+				</td>
+			</tr>
+		<% end %>
+	</tbody>
+</table>

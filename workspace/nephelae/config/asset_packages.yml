@@ -1,0 +1,23 @@
+---
+javascripts:
+- main:
+  - jquery-1.4.1
+  - jquery-ui-1.7.2.custom.min
+  - jquery.form
+  - jquery.strength
+  - password_strength
+  - facybox
+  - rails
+  - i18n
+  - messages
+  - application
+  - dashboard
+  - machines
+stylesheets:
+- main:
+  - facybox
+  - facybox_urls
+  - shared
+  - cloud
+  - slider
+

@@ -1,0 +1,16 @@
+pt:
+  activerecord:
+    attributes:
+      user:
+        enums:
+          language:
+            pt: Português
+            en: Inglês
+          sex:
+            "true": Feminino
+            "false": Masculino
+      user_skill:
+        enums:
+          kind:
+            magic: Mágica
+            agility: Agilidade

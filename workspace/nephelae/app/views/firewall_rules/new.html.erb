@@ -1,0 +1,25 @@
+<h3><%= t('firewall_rules.creation') %></h3>
+
+<% form_for :firewall_rule, @firewall_rule, :url => virtual_machine_firewall_rules_path(@machine) do |f| %>
+	<%= f.error_messages %>
+    <p>
+		<%= f.label :description %>
+		<%= f.text_field :description %>
+	</p>
+	<p>
+		<%= f.label :filter_protocol %>
+		<%= f.select :filter_protocol, [["TCP", "tcp"], ["UDP", "udp"]] %>
+	</p>
+	<p>
+		<%= f.label :filter_address %>
+		<%= f.text_field :filter_address %>
+	</p>
+	<p>
+		<%= f.label :filter_port %>
+		<%= f.text_field :filter_port %>
+	</p>
+	<p class="submit">
+		<%= submit_tag t('firewall_rules.create') %>
+		<%= link_to t('cancel'), virtual_machine_path(@machine) %>
+	</p>
+<% end %>

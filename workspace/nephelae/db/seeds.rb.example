@@ -1,0 +1,53 @@
+raise "This script erases all data and cannot run in production!" if Rails.env == "production"
+
+require 'database_cleaner'
+DatabaseCleaner.strategy = :truncation
+DatabaseCleaner.clean
+
+Factory(:test_account)
+zone = Factory(:zone)
+
+# Vlans Kung:    1200..1230
+# Vlans Dalcico: 1700 a 1710
+zone.generate_vlans(1700..1710)
+
+Factory(:host, :zone => zone)
+Factory(:master, :zone => zone)
+
+# Public Ips Kung:    '10.11.0.90', '10.11.0.91', '10.11.0.92', '10.11.0.93', '10.11.0.94', '10.11.0.95', '10.11.0.96'
+# Public Ips Dalcico: '10.11.0.82', '10.11.0.83', '10.11.0.84', '10.11.0.85', '10.11.0.86'
+public_range = Factory(:ip_range)
+public_range.ips.find(:all, :conditions => "address not in ('10.11.0.82', '10.11.0.83', '10.11.0.84', '10.11.0.85', '10.11.0.86')").each do |ip|
+  ip.delete
+end
+
+Factory(:dhcp)
+Factory(:firewall, :zone => zone)
+Factory(:vnc_proxy, :zone => zone)
+
+debian_image = Factory(:debian)
+Factory(:matrix, :system_image => debian_image, 
+        :uuid => "75f07750-3f5b-25f8-8384-7fd844646d48", 
+        :template_uuid => nil, :zone => zone)
+
+debian_64_image = Factory(:debian_64)
+Factory(:matrix, :system_image => debian_64_image, 
+        :uuid => "dbde3010-7687-a3a6-efe9-211e64a83714", 
+        :template_uuid => nil, :zone => zone)
+
+centos_image = Factory(:centos)
+Factory(:matrix, :system_image => centos_image, 
+        :uuid => "a0762f69-f25d-9edf-3e97-fafd9c15a020", 
+        :template_uuid => nil, :zone => zone)
+
+centos_64_image = Factory(:centos_64)
+Factory(:matrix, :system_image => centos_64_image, 
+        :uuid => "53b1173b-7c6a-58c2-47e9-9718f1a9bec0", 
+        :template_uuid => nil, :zone => zone)
+
+rh_image = Factory(:red_hat)
+rh_64_image = Factory(:red_hat_64)
+win2k3_image = Factory(:win_2k3)
+win2k3_64_image = Factory(:win_2k3_64)
+win2k8_image = Factory(:win_2k8)
+win2k8_64_image = Factory(:win_2k8_64)

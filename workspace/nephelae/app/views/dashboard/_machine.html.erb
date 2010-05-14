@@ -1,0 +1,36 @@
+<tr id="machine-<%= machine.id %>" class="<%= machine_status(machine) %> machine">
+	<td class="icon">
+		<%= image_tag "#{machine.system_image.code}.png" %>
+	</td>
+
+	<td class="name">
+		<strong><%= h machine.name %></strong>
+		<% if machine.installed? %>
+			<br/><%= machine.public_ip.address %>
+		<% end %>
+	</td>
+
+	<td class="memory">
+		<%= t("machines.memory", :size => number_to_human_size(machine.memory.megabytes)) %>
+	</td>
+
+	<td class="disk">
+		<%= t("machines.hdd", :size => number_to_human_size(machine.hdd.gigabytes)) %>
+	</td>
+
+	<td class="status">
+		<%= t(machine_status(machine), :scope => :"machines.status") %>
+	</td>
+
+	<% if machine.installed? %>
+		<td class="actions">
+			<%= link_to t('machines.commands.restart'), confirm_run_virtual_machine_path(machine, "restart"), 
+					:title => t("machines.commands.restart"), :class => "restart"%>
+			<%= link_to t("machines.more"), machine, :title => t("machines.more"), :class => "details" %>
+      		<%= link_to t("machines.console"), virtual_machine_console_path(machine), 
+					:title => t("machines.console"), :class => "console" %>
+		</td>
+	<% else %>
+		<td class="spinner"></td>
+	<% end %>
+</tr>
