@@ -1,0 +1,13 @@
+Source: bricklayer
+Section: unknown
+Priority: extra
+Maintainer: root <root@debian.localdomain>
+Build-Depends: cdbs, debhelper (>= 7), python2.6
+Standards-Version: 3.8.4
+Homepage: <insert the upstream URL, if relevant>
+
+Package: bricklayer
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: <insert up to 60 chars description>
+ <insert long description, indented with spaces>

@@ -4,6 +4,8 @@ import pystache
 import subprocess
 import time
 
+from git import Git
+
 class Builder:
     def __init__(self, project):
         self.project = project
@@ -58,16 +60,23 @@ class Builder:
 
             for filename, data in templates.iteritems():
                 open(os.path.join(debian_dir, filename), 'w').write(data)
-            
-        dch_cmd = subprocess.Popen(['git-dch', '-s', 'HEAD^', '-S'], cwd=workdir)
+        
+        dch_cmd = subprocess.Popen(['dch', '-i', '\*Snapshot commits'], cwd=workdir)
         dch_cmd.wait()
         
+        for log in Git(self.project).log():
+            append_log = subprocess.Popen(['dch', '-a', log])
+            append_log.wait()
+            
         dpkg_cmd = subprocess.Popen(
                 ['dpkg-buildpackage', '-rfakeroot'], 
                 cwd=workdir
             )
         
         dpkg_cmd.wait()
+
+        clean_cmd = subprocess.Popen(['dh', 'clean'], cwd=workdir)
+        clean_cmd.wait()
 
     def upload_to(self):
         pass

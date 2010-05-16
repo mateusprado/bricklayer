@@ -2,12 +2,15 @@ import os, subprocess, logging
 
 class Git:
 
-    def __init__(self, project, workdir='workspace'):
+    def __init__(self, project, workdir='workspace', branch='master'):
         self.workdir = os.path.join(workdir, project.name)
         self.project = project
+        self.branch = branch
 
-    def _exec_git(self, cmd=[], cwd='.'):
-        return subprocess.Popen(cmd, cwd=cwd, stdout=open('/dev/null', 'w'))
+    def _exec_git(self, cmd=[], cwd='.', stdout=None):
+        if stdout is None:
+            stdout = open('/dev/null', 'w')
+        return subprocess.Popen(cmd, cwd=cwd, stdout=stdout)
 
     def clone(self):
         git_cmd = self._exec_git(['git', 'clone', self.project.git_url, self.workdir])
@@ -26,6 +29,11 @@ class Git:
 
     def create_tag(self, tag=''):
         self._exec_git(['git', 'tag', str(tag)], cwd=self.workdir)
+
+    def log(self, number=3):
+        git_cmd = self._exec_git(['git', 'log', '-n', str(number), '--oneline'], cwd=self.workdir, stdout=subprocess.PIPE)
+        git_cmd.wait()
+        return git_cmd.stdout.readlines()
 
     def push_tags(self):
         pass
