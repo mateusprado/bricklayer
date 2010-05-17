@@ -1,11 +1,18 @@
-import sys, os
+import sys
+import os
+import ConfigParser
 from nose.tools import *
 
 sys.path.append('../')
 sys.path.append('../utils')
-os.chdir('test')
 
 from projects import Projects
+
+def teardown():
+    _config_file = ConfigParser.ConfigParser()
+    _config_file.read(['conf/db.ini'])
+    os.unlink(_config_file.get('databases', 'uri').split('/')[-1])
+   
 
 class project_test:
      

@@ -28,7 +28,8 @@ class Git:
         return os.listdir(tagdir)
 
     def create_tag(self, tag=''):
-        self._exec_git(['git', 'tag', str(tag)], cwd=self.workdir)
+        git_cmd = self._exec_git(['git', 'tag', str(tag)], cwd=self.workdir)
+        git_cmd.wait()
 
     def log(self, number=3):
         git_cmd = self._exec_git(['git', 'log', '-n', str(number), '--oneline'], cwd=self.workdir, stdout=subprocess.PIPE)

@@ -1,26 +1,46 @@
-import os, shutil
-from nose import *
+import os
+import sys
+import shutil
+import mocker
+
+os.chdir('test')
+sys.path.append('../')
+sys.path.append('../utils')
+
+from nose.tools import *
 
 from git import Git
 
+def teardown():
+    if os.path.isdir('workspace'):
+        shutil.rmtree('workspace', ignore_errors=True)
+
+
 class Git_test:
 
-    def teardown(self):
-        if os.path.isdir('test/workspace'):
-            shutil.rmtree('test/workspace', ignore_errors=True)
-
     def setup(self):
-        if not os.path.isdir('test/workspace'):
-            os.makedirs('test/workspace')
+
+        self.project = mocker.Mocker()
+        self.project.name = 'bricklayer'
+        self.project.git_url = '..'
+        self.project.version = '1.0'
+        self.project.replay()
+
+        if not os.path.isdir('workspace'):
+            os.makedirs('workspace')
 
     def clone_test(self):
-        project = Projects(
-                name='rest',
-                url='git://git.locaweb.com.br/iphandler/iphandler.git'
-            )
-        git = Git(project, workdir='test/workspace')
+        git = Git(self.project, workdir='workspace')
         git.clone()
         assert os.path.isdir(git.workdir)
         assert os.path.isdir(os.path.join(git.workdir, '.git'))
+
+    def create_tag_test(self):
+        git = Git(self.project, workdir='workspace')
+        git.create_tag('testing_tag')
+        print ">>>", git.list_tags()
+        assert_true('testing_tag' in git.list_tags())
+
+
     
 
