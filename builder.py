@@ -32,7 +32,7 @@ class Builder:
 
         template_data = {
                 'name': self.project.name,
-                'version': "%s-%s" % (self.project.version, self.project.last_build),
+                'version': "%s" % (self.project.version),
                 'build_cmd': self.project.build_cmd,
                 'install_cmd': self.project.install_cmd,
                 'username': self.project.username,

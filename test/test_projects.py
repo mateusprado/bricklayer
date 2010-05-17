@@ -31,4 +31,10 @@ class project_test:
         p2.save()
 
         assert_true(Projects().get_all().count() >= 2)
-        
+
+    def get_name_test(self):
+        p1 = Projects(name='name', git_url='..')
+        p1.save()
+        pp = Projects().get('name')
+        assert_equal(pp.name, 'name')
+

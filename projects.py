@@ -54,7 +54,7 @@ class Projects(Base):
     build_cmd = Column(String)
     install_cmd = Column(String)
     install_prefix = Column(String)
-    last_build = Column(Integer)
+    last_tag = Column(Integer)
     last_commit = Column(String)
     username = Column(String)
     email = Column(String)

@@ -37,4 +37,5 @@ class Git:
         return git_cmd.stdout.readlines()
 
     def push_tags(self):
-        pass
+        git_cmd = self._exec_git(['git', 'push', '--tags'])
+        git_cmd.wait()

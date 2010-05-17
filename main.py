@@ -39,24 +39,20 @@ def build_project(project_name):
 
     try:
         tags = git.list_tags()
+        logging.debug('Tags found: %s', tags)
     except Exception, e:
         logging.info('No tags available : %s', repr(e))
     finally:
         tags = []
 
     last_commit = git.last_commit()
-
-    if project.last_commit != last_commit:        
+    if len(tags) > 0 or project.last_commit != last_commit:
         build = Builder(project)
+
         if project.repository_url:
             build.upload_to(repository_url)
-        
-        if len(tags) > 0: 
-            project.last_build = str(int(tags[0]) + 1)
-        else:
-            project.last_build = 1
-            git.create_tag(project.last_build)
-        
+             
+        project.last_tag = tags[0]
         project.last_commit = last_commit
     project.save()
 
