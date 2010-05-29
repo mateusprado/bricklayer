@@ -28,7 +28,7 @@ def synchronized(lock):
 
 class Session:
     _config_file = ConfigParser.ConfigParser()
-    _config_file.read(['conf/db.ini'])
+    _config_file.read(['config/db.ini'])
     _engine = create_engine(_config_file.get('databases', 'uri'))
 
     _session_maker = scoped_session(sessionmaker())
@@ -60,6 +60,7 @@ class Projects(Base):
     email = Column(String)
     repository_url = Column(String)
     version = Column(String)
+    release = Column(String)
 
     def __init__(self, name='', git_url='', install_cmd='', version=''):
         self.name = name
@@ -84,3 +85,6 @@ class Projects(Base):
     def get_all(self):
         return Session().get_session().query(Projects)
 
+if __name__ == '__main__':
+    projects_db = Projects()
+    projects_db.metadata.create_all(Session().get_engine())

@@ -9,6 +9,7 @@ from git import Git
 class Builder:
     def __init__(self, project):
         self.project = project
+        self.workdir = os.path.join('workspace', self.project.name) 
         logging.getLogger('builder').debug('Building project %s', self.project)
         self.rpm()
         self.deb()
@@ -40,8 +41,7 @@ class Builder:
                 'date': time.strftime("%a, %d %h %Y %T %z"),
             }
 
-        workdir = os.path.join('workspace', self.project.name) 
-        debian_dir = os.path.join(workdir, 'debian')
+        debian_dir = os.path.join(self.workdir, 'debian')
 
         def read_file_data(f):
             template_fd = open(os.path.join(templates_dir, f))
@@ -61,23 +61,30 @@ class Builder:
             for filename, data in templates.iteritems():
                 open(os.path.join(debian_dir, filename), 'w').write(data)
         
-        dch_cmd = subprocess.Popen(['dch', '-i', '\*Snapshot commits'], cwd=workdir)
+        dch_cmd = subprocess.Popen(['dch', '-i', '*Snapshot commits'], cwd=self.workdir)
         dch_cmd.wait()
         
         for log in Git(self.project).log():
-            append_log = subprocess.Popen(['dch', '-a', log])
+            append_log = subprocess.Popen(['dch', '-a', log], cwd=self.workdir)
             append_log.wait()
             
         dpkg_cmd = subprocess.Popen(
                 ['dpkg-buildpackage', '-rfakeroot'], 
-                cwd=workdir
+                cwd=self.workdir
             )
         
         dpkg_cmd.wait()
 
-        clean_cmd = subprocess.Popen(['dh', 'clean'], cwd=workdir)
+        clean_cmd = subprocess.Popen(['dh', 'clean'], cwd=self.workdir)
         clean_cmd.wait()
 
     def upload_to(self):
-        pass
+        upload_cmd = subprocess.Popen(['dupload', '-c'])
+        upload_cmd.wait()
 
+    def promote_to(self, release):
+        self.project.release = release
+        self.project.save()
+        Git(self.project).create_tag("%s/%s" % (release, self.project.version))
+        dch_cmd = subprocess.Popen(['dch', '-r', '--no-force-save-on-release', '-d', release], cwd=self.workdir)
+        dch_cmd.wait()

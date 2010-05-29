@@ -51,13 +51,16 @@ def build_project(project_name):
 
         if project.repository_url:
             build.upload_to(repository_url)
-             
-        project.last_tag = tags[0]
+        
+        if len(tags) > 0:
+            project.last_tag = tags[0]
+        
         project.last_commit = last_commit
     project.save()
 
 def schedule_projects():
     while _sched_running:
+        logging.debug("starting scheduler")
         projects = Projects().get_all()
         for project in projects:
             logging.debug('scheduling %s', project)
@@ -71,10 +74,10 @@ def schedule_projects():
         _scheduler.start()
 
 def reload_scheduler(sig, action):
-    global _sched_running
+    logging.debug('reload scheduler')
+    global _sched_running, _scheduler
     _scheduler.stop()
-    _scheduler.running = True
-    _sched_running = True
+    _scheduler = Scheduler()
 
 def stop_scheduler(sig, action):
     logging.debug('terminating')

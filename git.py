@@ -32,7 +32,7 @@ class Git:
         git_cmd.wait()
 
     def log(self, number=3):
-        git_cmd = self._exec_git(['git', 'log', '-n', str(number), '--oneline'], cwd=self.workdir, stdout=subprocess.PIPE)
+        git_cmd = self._exec_git(['git', 'log', '-n', str(number), '--pretty=oneline', '--abbrev-commit'], cwd=self.workdir, stdout=subprocess.PIPE)
         git_cmd.wait()
         return git_cmd.stdout.readlines()
 

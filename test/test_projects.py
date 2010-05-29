@@ -10,7 +10,7 @@ from projects import Projects
 
 def teardown():
     _config_file = ConfigParser.ConfigParser()
-    _config_file.read(['conf/db.ini'])
+    _config_file.read(['config/db.ini'])
     os.unlink(_config_file.get('databases', 'uri').split('/')[-1])
    
 

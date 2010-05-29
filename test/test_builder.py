@@ -8,3 +8,6 @@ class builder_test:
 
     def rpm_test(self):
         pass
+
+    def promote_to(self):
+        pass
