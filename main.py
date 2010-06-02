@@ -25,7 +25,7 @@ _scheduler = Scheduler()
 _sched_running = True
 
 def build_project(project_name):
-    project = Projects().get(project_name)
+    project = Projects.get(project_name)
     git = Git(project)
     
     try:
@@ -61,7 +61,7 @@ def build_project(project_name):
 def schedule_projects():
     while _sched_running:
         logging.debug("starting scheduler")
-        projects = Projects().get_all()
+        projects = Projects.get_all()
         for project in projects:
             logging.debug('scheduling %s', project)
             _scheduler.add_interval_task(

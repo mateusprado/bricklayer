@@ -8,20 +8,25 @@ from builder import Builder
 
 @route('/project', method='POST')
 def project_post():
-    project = Projects()
-    project.name = request.POST.pop('name')
-    project.git_url = request.POST.pop('git_url')
-    project.install_cmd = request.POST.pop('install_cmd')
-
-    for name, parm in request.POST.iteritems():
-        projects.setattr(name, parm)
-
     try:
-        project.save()
-        os.kill(os.getpid(), signal.SIGHUP)
-        return {'status': 'ok'}
+        Projects().get(request.POST['name'])
     except Exception, e:
-        return {'status': repr(e)}
+        project = Projects()
+        project.name = request.POST.pop('name')
+        project.git_url = request.POST.pop('git_url')
+        project.install_cmd = request.POST.pop('install_cmd')
+
+        for name, parm in request.POST.iteritems():
+            projects.setattr(name, parm)
+
+        try:
+            project.save()
+            os.kill(os.getpid(), signal.SIGHUP)
+            return {'status': 'ok'}
+        except Exception, e:
+            return {'status': repr(e)}
+    else:
+        return {'status':  "Project already exists"}
 
 @route('/project/:name', method='PUT')
 def project_put(name):

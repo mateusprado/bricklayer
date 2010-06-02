@@ -25,7 +25,6 @@ def synchronized(lock):
             
     return wrapper
 
-
 class Session:
     _config_file = ConfigParser.ConfigParser()
     _config_file.read(['config/db.ini'])
@@ -67,11 +66,14 @@ class Projects(Base):
         self.git_url = git_url
         self.install_cmd = install_cmd
         self.version = version
+        self.email = 'bricklayer@locaweb.com.br'
+        self.username = 'Bricklayer Builder'
         self.metadata.create_all(Session().get_engine())
     
     def __repr__(self):
-        return "<Project %s id=%s>" % (self.name, self.id)
-
+        return "<Project name='%s' id=%s>" % (self.name, self.id)
+    
+    @classmethod
     @synchronized(_session_lock)
     def get(self, name):
         return Session().get_session().query(Projects).filter_by(name=name)[0]
@@ -80,10 +82,13 @@ class Projects(Base):
     def save(self):
         Session().get_session().add(self)
         Session().get_session().commit()
-
+    
+    @classmethod
     @synchronized(_session_lock)
     def get_all(self):
-        return Session().get_session().query(Projects)
+        for project in Session().get_session().query(Projects):
+            yield project
+        
 
 if __name__ == '__main__':
     projects_db = Projects()
