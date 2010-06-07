@@ -4,7 +4,7 @@ import shutil
 import mocker
 
 os.chdir('test')
-sys.path.append('../')
+sys.path.append('../bricklayer')
 sys.path.append('../utils')
 
 from nose.tools import *
