@@ -8,7 +8,7 @@ from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 
 _session_lock = Lock()
-_config_file = 'config/bricklayer.ini'
+_config_file = '/etc/bricklayer/bricklayer.ini'
 
 def synchronized(lock):
     def wrapper(func):
