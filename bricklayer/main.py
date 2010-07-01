@@ -1,8 +1,7 @@
 from __future__ import with_statement
-import sys
-sys.path.append('utils')
+import sys, os
+sys.path.append(os.path.join(os.path.dirname(__file__), 'utils'))
 
-import os
 import subprocess
 import threading
 import signal

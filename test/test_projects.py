@@ -4,7 +4,7 @@ import ConfigParser
 from nose.tools import *
 
 sys.path.append('../bricklayer')
-sys.path.append('../utils')
+sys.path.append('../bricklayer/utils')
 
 from projects import Projects
 
