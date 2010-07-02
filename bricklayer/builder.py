@@ -61,7 +61,7 @@ class Builder:
             for filename, data in templates.iteritems():
                 open(os.path.join(debian_dir, filename), 'w').write(data)
         
-        dch_cmd = subprocess.Popen(['dch', '-i', '*Snapshot commits'], cwd=self.workdir)
+        dch_cmd = subprocess.Popen(['dch', '-i', '** Snapshot commits'], cwd=self.workdir)
         dch_cmd.wait()
         
         for log in Git(self.project).log():
