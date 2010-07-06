@@ -1,8 +1,14 @@
-import bottle, os, signal
-bottle.debug(True)
+from __future__ import with_statement
+import os
+import signal
+import logging
+import sys
 
-from bottle import route, request
-
+sys.path.append(os.path.join(os.path.dirname(__file__), 'utils'))
+import daemon
+import lockfile
+import bottle
+from bottle import route, request, PasteServer
 from projects import Projects
 from builder import Builder
 
@@ -14,17 +20,17 @@ def project_post():
         project = Projects()
         project.name = request.POST.pop('name')
         project.git_url = request.POST.pop('git_url')
-        project.install_cmd = request.POST.pop('install_cmd')
 
         for name, parm in request.POST.iteritems():
-            projects.setattr(name, parm)
+            setattr(project, str(name), parm)
 
         try:
             project.save()
+            logging.info('Project created: %s', project.name)
             os.kill(os.getpid(), signal.SIGHUP)
             return {'status': 'ok'}
         except Exception, e:
-            return {'status': repr(e)}
+            return {'status': "error: %s" % repr(e)}
     else:
         return {'status':  "Project already exists"}
 
@@ -49,7 +55,7 @@ def project_get(name):
         return "%s No project found" % e
     return {'name': project.name, 
             'git_utl': project.git_url, 
-            'install_cmd': project.install_cmd, 
+            'last_tag': project.last_tag,
             'last_commit': project.last_commit}
 
 @route('/project/:name', method='DELETE')

@@ -1,8 +1,8 @@
 import os, subprocess, logging
-
+from config import BrickConfig
 class Git:
 
-    def __init__(self, project, workdir='workspace', branch='master'):
+    def __init__(self, project, workdir=BrickConfig().get('workspace', 'dir'), branch='master'):
         self.workdir = os.path.join(workdir, project.name)
         self.project = project
         self.branch = branch
@@ -13,6 +13,7 @@ class Git:
         return subprocess.Popen(cmd, cwd=cwd, stdout=stdout)
 
     def clone(self):
+        logging.debug("Git clone")
         git_cmd = self._exec_git(['git', 'clone', self.project.git_url, self.workdir])
         git_cmd.wait()
     

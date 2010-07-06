@@ -1,14 +1,15 @@
 import os
-import ConfigParser
-
 from threading import Lock
 from sqlalchemy import Column, Integer, String, create_engine
+from sqlalchemy.pool import SingletonThreadPool
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.ext.declarative import declarative_base
+
+from config import BrickConfig
+
 Base = declarative_base()
 
 _session_lock = Lock()
-_config_file = '/etc/bricklayer/bricklayer.ini'
 
 def synchronized(lock):
     def wrapper(func):
@@ -27,18 +28,16 @@ def synchronized(lock):
     return wrapper
 
 class Session:
-    _config_parse = ConfigParser.ConfigParser()
-    _config_parse.read([_config_file])
-    _engine = create_engine(_config_parse.get('databases', 'uri'))
+    _engine = create_engine(BrickConfig().get('databases', 'uri'), poolclass=SingletonThreadPool)
 
     _session_maker = scoped_session(sessionmaker())
+    _session_maker.configure(bind=_engine)
     _session = None
     
-    _session_maker.configure(bind=_engine)
-    _session = _session_maker()
+    def __init__(self):
+        self._session = self._session_maker()
 
-    @classmethod
-    def get_session(self):
+    def get(self):
         return self._session
 
     @classmethod
@@ -70,7 +69,6 @@ class Projects(Base):
         self.version = version
         self.email = 'bricklayer@locaweb.com.br'
         self.username = 'Bricklayer Builder'
-        self.metadata.create_all(Session.get_engine())
     
     def __repr__(self):
         return "<Project name='%s' id=%s>" % (self.name, self.id)
@@ -78,18 +76,19 @@ class Projects(Base):
     @classmethod
     @synchronized(_session_lock)
     def get(self, name):
-        return Session.get_session().query(Projects).filter_by(name=name)[0]
+        result = Session().get().query(Projects).filter_by(name=name)[0]
+        return result
     
     @classmethod
     @synchronized(_session_lock)
     def get_all(self):
-        for project in Session.get_session().query(Projects):
+        for project in Session().get().query(Projects):
             yield project
         
     @synchronized(_session_lock)
     def save(self):
-        Session.get_session().add(self)
-        Session.get_session().commit()
+        Session().get().add(self)
+        Session().get().commit()
     
 
 if __name__ == '__main__':

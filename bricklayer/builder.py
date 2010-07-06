@@ -3,23 +3,31 @@ import logging
 import pystache
 import subprocess
 import time
+import ConfigParser
 
 from git import Git
+from config import BrickConfig
 
 class Builder:
     def __init__(self, project):
-        self.project = project
-        self.workdir = os.path.join('workspace', self.project.name) 
-        logging.getLogger('builder').debug('Building project %s', self.project)
-        self.rpm()
-        self.deb()
+        try:
+            _workspace = BrickConfig().get('workspace', 'dir')
+            self.project = project
+            self.workdir = os.path.join(_workspace, self.project.name) 
+            os.chdir(self.workdir)
+
+            logging.getLogger('builder').debug('Building project %s on %s', self.project, self.workdir)
+            self.rpm()
+            self.deb()
+        except Exception, e: 
+            raise e
 
     def rpm(self):
         pass
 
     def deb(self):
         templates = {}
-        templates_dir = 'pkg_template/deb'
+        templates_dir = os.path.join(BrickConfig().get('workspace', 'template_dir'), 'deb')
         
         if not self.project.install_cmd :
 

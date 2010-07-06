@@ -3,12 +3,12 @@ import sys, os
 sys.path.append(os.path.join(os.path.dirname(__file__), 'utils'))
 
 import subprocess
-import threading
 import signal
 import daemon
 import lockfile
 import time
 import logging
+from threading import Thread, activeCount
 
 import rest
 from kronos import Scheduler, method
@@ -22,6 +22,11 @@ logging.basicConfig(level=logging.DEBUG)
 
 _scheduler = Scheduler()
 _sched_running = True
+
+def sort_tags(tag):
+    if tag.startswith('hudson'):
+        int(tag.split('-')[-1])
+        
 
 def build_project(project_name):
     project = Projects.get(project_name)
@@ -37,8 +42,8 @@ def build_project(project_name):
         raise
 
     try:
-        tags = git.list_tags()
-        logging.debug('Tags found: %s', tags)
+        tags = sorted(git.list_tags(), key=sort_tags)
+        logging.debug('Last tag found: %s', tags[-1])
     except Exception, e:
         logging.info('No tags available : %s', repr(e))
     finally:
@@ -87,25 +92,26 @@ def stop_scheduler(sig, action):
 
 def main_function():
 
-    context = daemon.DaemonContext(detach_process=False)
-    context.stdout = sys.stdout 
-    context.stderr = sys.stderr 
+    context = daemon.DaemonContext()
+    context.stdout = open('/var/log/bricklayer-out.log', 'a')
+    context.stderr = open('/var/log/bricklayer-err.log', 'a')
     context.working_directory = os.path.abspath(os.path.curdir)
-    #context.pidfile = lockfile.FileLock('/var/run/build_project.pid')
 
     context.signal_map = {
             signal.SIGHUP: reload_scheduler,
             signal.SIGINT: stop_scheduler,
-            }
+        }
     
     with context:
-        sched_thread = threading.Thread(name='sched', target=schedule_projects)
+        sched_thread = Thread(target=schedule_projects)
         sched_thread.start()
         rest.run()
-        while True:
-            logging.debug(threading.enumerate())
-            time.sleep(5)
+        sched_thread.join()
 
+        #while True:
+        #    logging.debug("Threads running: %s", activeChildren())
+        #    time.sleep(60)
+    
 
 if __name__ == '__main__':
     main_function()
