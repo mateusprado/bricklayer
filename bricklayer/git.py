@@ -25,8 +25,11 @@ class Git:
         return open(os.path.join(self.workdir, '.git', 'refs', 'heads', 'master')).read()
 
     def list_tags(self):
-        tagdir = os.path.join(self.workdir, '.git', 'refs', 'tags')
-        return os.listdir(tagdir)
+        try:
+            tagdir = os.path.join(self.workdir, '.git', 'refs', 'tags')
+            return os.listdir(tagdir)
+        except IOError, e:
+            return []
 
     def create_tag(self, tag=''):
         git_cmd = self._exec_git(['git', 'tag', str(tag)], cwd=self.workdir)
