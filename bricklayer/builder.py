@@ -11,9 +11,9 @@ from config import BrickConfig
 class Builder:
     def __init__(self, project):
         try:
-            _workspace = BrickConfig().get('workspace', 'dir')
+            self.workspace = BrickConfig().get('workspace', 'dir')
             self.project = project
-            self.workdir = os.path.join(_workspace, self.project.name) 
+            self.workdir = os.path.join(self.workspace, self.project.name) 
             os.chdir(self.workdir)
 
             logging.getLogger('builder').debug('Building project %s on %s', self.project, self.workdir)
@@ -93,7 +93,7 @@ class Builder:
         clean_cmd.wait()
 
     def upload_to(self):
-        upload_cmd = subprocess.Popen(['dput', '../%s_%s_*.changes' % (self.project.name,self.project.version) ])
+        upload_cmd = subprocess.Popen(['dput', '%s/%s_%s_*.changes' % (self.workspace,self.project.name,self.project.version) ])
         upload_cmd.wait()
 
     def promote_to(self, release):
