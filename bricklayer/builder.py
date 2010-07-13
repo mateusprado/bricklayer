@@ -3,6 +3,7 @@ import logging
 import pystache
 import subprocess
 import time
+import glob
 import ConfigParser
 
 from git import Git
@@ -93,7 +94,8 @@ class Builder:
         clean_cmd.wait()
 
     def upload_to(self):
-        upload_cmd = subprocess.Popen(['dput', '%s/%s_%s_*.changes' % (self.workspace,self.project.name,self.project.version) ])
+        changes_file = glob.glob('%s/%s_%s_*.changes' % (self.workspace,self.project.name,self.project.version))[0]
+        upload_cmd = subprocess.Popen(['dput',  changes_file])
         upload_cmd.wait()
 
     def promote_to(self, release):
