@@ -93,7 +93,7 @@ class Builder:
         clean_cmd.wait()
 
     def upload_to(self):
-        upload_cmd = subprocess.Popen(['dput', '%s_%s_*.changes' % (self.project.name,self.project.version) ])
+        upload_cmd = subprocess.Popen(['dput', '../%s_%s_*.changes' % (self.project.name,self.project.version) ])
         upload_cmd.wait()
 
     def promote_to(self, release):
