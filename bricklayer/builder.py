@@ -19,6 +19,8 @@ class Builder:
             logging.getLogger('builder').debug('Building project %s on %s', self.project, self.workdir)
             self.rpm()
             self.deb()
+            self.upload_to()
+
         except Exception, e: 
             raise e
 
@@ -76,11 +78,12 @@ class Builder:
             append_log = subprocess.Popen(['dch', '-a', log], cwd=self.workdir)
             append_log.wait()
         
-        self.project.version = open('debian/changelog', 'r').readline().split('(')[1].split(')')[0]
+        self.project.version = open(os.path.join(self.workdir, 'debian/changelog'), 'r').readline().split('(')[1].split(')')[0]
         self.project.save()
             
         dpkg_cmd = subprocess.Popen(
-                ['dpkg-buildpackage', '-rfakeroot'], 
+                ['dpkg-buildpackage', '-rfakeroot', 
+                    '-k%s' % BrickConfig().get('gpg', 'keyid')],
                 cwd=self.workdir
             )
         
@@ -90,7 +93,7 @@ class Builder:
         clean_cmd.wait()
 
     def upload_to(self):
-        upload_cmd = subprocess.Popen(['dupload', '--to', 'locaweb-testing', '%s_%s_*.changes' % (self.project.name,self.project.version) ])
+        upload_cmd = subprocess.Popen(['dput', '%s_%s_*.changes' % (self.project.name,self.project.version) ])
         upload_cmd.wait()
 
     def promote_to(self, release):

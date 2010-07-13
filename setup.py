@@ -10,7 +10,7 @@ for root, dirs, files in os.walk('pkg_template'):
 
 data_files_list = template_dir
 data_files_list.extend([
-        ('/etc/bricklayer/', ['config/bricklayer.ini']),
+        ('/etc/bricklayer/', ['config/bricklayer.ini', 'config/gpg.key']),
         ('/var/lib/bricklayer/', ['db/bricklayer.db']),
     ]
 )

@@ -55,6 +55,7 @@ def project_get(name):
         return "%s No project found" % e
     return {'name': project.name, 
             'git_utl': project.git_url, 
+            'version': project.version,
             'last_tag': project.last_tag,
             'last_commit': project.last_commit}
 

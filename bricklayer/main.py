@@ -57,7 +57,7 @@ def build_project(project_name):
             build.upload_to(repository_url)
         
         if len(tags) > 0:
-            project.last_tag = tags[0]
+            project.last_tag = tags[-1]
         
         project.last_commit = last_commit
     project.save()
@@ -93,8 +93,7 @@ def stop_scheduler(sig, action):
 def main_function():
 
     context = daemon.DaemonContext()
-    context.stdout = open('/var/log/bricklayer-out.log', 'a')
-    context.stderr = open('/var/log/bricklayer-err.log', 'a')
+    context.stderr = context.stdout = open('/var/log/bricklayer.log', 'a')
     context.working_directory = os.path.abspath(os.path.curdir)
 
     context.signal_map = {
@@ -106,7 +105,6 @@ def main_function():
         sched_thread = Thread(target=schedule_projects)
         sched_thread.start()
         rest.run()
-        sched_thread.join()
 
         #while True:
         #    logging.debug("Threads running: %s", activeChildren())
