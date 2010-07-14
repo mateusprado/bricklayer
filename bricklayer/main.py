@@ -107,6 +107,7 @@ def main_function():
         sched_thread = Process(target=schedule_projects)
         sched_thread.start()
         rest_thread = Process(target=rest.run, args=[sched_thread.pid])
+        rest_thread.start()
 
         #while True:
         #    logging.debug("Threads running: %s", activeChildren())
