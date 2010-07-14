@@ -42,13 +42,14 @@ def build_project(project_name):
         logging.error('Could not clone or update repository')
         raise
 
-    tags = []
     try:
         tags = sorted(git.list_tags(), key=sort_tags)
+        logging.debug("tags: %s", tags)
         if len(tags) > 0:
             logging.debug('Last tag found: %s', tags[-1])
     except Exception, e:
         logging.info('No tags available : %s', repr(e))
+        tags = []
 
     last_commit = git.last_commit()
     if len(tags) > 0 or project.last_commit != last_commit:
