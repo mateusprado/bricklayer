@@ -26,7 +26,7 @@ _sched_running = True
 
 def sort_tags(tag):
     if tag.startswith('hudson'):
-        int(tag.split('-')[-1])
+        return int(tag.split('-')[-1])
         
 
 def build_project(project_name):
