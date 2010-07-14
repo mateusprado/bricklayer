@@ -9,6 +9,7 @@ import lockfile
 import time
 import logging
 from threading import Thread, activeCount
+from multiprocessing import Process
 
 import rest
 from kronos import Scheduler, method
@@ -64,7 +65,7 @@ def build_project(project_name):
 
 def schedule_projects():
     while _sched_running:
-        logging.debug("starting scheduler")
+        logging.debug("starting scheduler pid %d", os.getpid())
         projects = Projects.get_all()
         for project in projects:
             logging.debug('scheduling %s', project)
@@ -102,9 +103,9 @@ def main_function():
         }
     
     with context:
-        sched_thread = Thread(target=schedule_projects)
+        sched_thread = Process(target=schedule_projects)
         sched_thread.start()
-        rest.run()
+        rest_thread = Process(target=rest.run, args=[sched_thread.pid])
 
         #while True:
         #    logging.debug("Threads running: %s", activeChildren())

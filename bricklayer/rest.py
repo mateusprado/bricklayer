@@ -11,6 +11,7 @@ import bottle
 from bottle import route, request, PasteServer
 from projects import Projects
 from builder import Builder
+_parent_pid = None
 
 @route('/project', method='POST')
 def project_post():
@@ -27,7 +28,7 @@ def project_post():
         try:
             project.save()
             logging.info('Project created: %s', project.name)
-            os.kill(os.getpid(), signal.SIGHUP)
+            os.kill(_parent_pid, signal.SIGHUP)
             return {'status': 'ok'}
         except Exception, e:
             return {'status': "error: %s" % repr(e)}
@@ -42,7 +43,7 @@ def project_put(name):
 
     try:
         project.save()
-        os.kill(os.getpid(), signal.SIGHUP)
+        os.kill(_parent_pid, signal.SIGHUP)
         return {'status': 'ok'}
     except Exception, e:
         return {'status': repr(e)}
@@ -67,7 +68,9 @@ def project_delete(name):
     except Exception, e:
         raise e
 
-def run():
+def run(parent_pid):
+    global _parent_pid
+    _parent_pid = parent_pid
     bottle.run(host='0.0.0.0')
 
 if __name__ == "__main__":
