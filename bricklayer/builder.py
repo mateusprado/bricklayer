@@ -54,11 +54,12 @@ class Builder:
 
         debian_dir = os.path.join(self.workdir, 'debian')
 
+        def read_file_data(f):
+            template_fd = open(os.path.join(templates_dir, f))
+            templates[f] = pystache.template.Template(template_fd.read()).render(context=template_data)
+            template_fd.close()
+
         if not os.path.isdir(debian_dir):
-            def read_file_data(f):
-                template_fd = open(os.path.join(templates_dir, f))
-                templates[f] = pystache.template.Template(template_fd.read()).render(context=template_data)
-                template_fd.close()
 
             map(read_file_data, ['changelog', 'control', 'rules'])
             

@@ -5,13 +5,15 @@ import logging
 import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), 'utils'))
+sys.path.append(os.path.dirname(__file__))
 import daemon
 import lockfile
 import bottle
+import main
 from bottle import route, request, PasteServer
 from projects import Projects
 from builder import Builder
-from main import *
+
 
 _parent_pid = None
 
@@ -30,7 +32,7 @@ def project_post():
         try:
             project.save()
             logging.info('Project created: %s', project.name)
-            build_project(project.name)            
+            main.build_project(project.name)            
             return {'status': 'ok'}
         except Exception, e:
             return {'status': "error: %s" % repr(e)}
@@ -45,7 +47,7 @@ def project_put(name):
 
     try:
         project.save()
-        os.kill(_parent_pid, signal.SIGHUP)
+        main.build_project(project.name)
         return {'status': 'ok'}
     except Exception, e:
         return {'status': repr(e)}
@@ -57,7 +59,7 @@ def project_get(name):
     except Exception, e:
         return "%s No project found" % e
     return {'name': project.name, 
-            'git_utl': project.git_url, 
+            'git_url': project.git_url, 
             'version': project.version,
             'last_tag': project.last_tag,
             'last_commit': project.last_commit}
