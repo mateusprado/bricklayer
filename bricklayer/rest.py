@@ -11,6 +11,8 @@ import bottle
 from bottle import route, request, PasteServer
 from projects import Projects
 from builder import Builder
+from main import *
+
 _parent_pid = None
 
 @route('/project', method='POST')
@@ -28,7 +30,7 @@ def project_post():
         try:
             project.save()
             logging.info('Project created: %s', project.name)
-            os.kill(_parent_pid, signal.SIGHUP)
+            build_project(project.name)            
             return {'status': 'ok'}
         except Exception, e:
             return {'status': "error: %s" % repr(e)}
