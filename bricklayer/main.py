@@ -25,13 +25,14 @@ _scheduler = Scheduler()
 _sched_running = True
 
 def sort_tags(tag):
-    if tag.startswith('hudson'):
+    if tag != None and tag.startswith('hudson'):
         return int(tag.split('-')[-1])
         
 
 def build_project(project_name):
     project = Projects.get(project_name)
     git = Git(project)
+    build = 0
     
     try:
         if not os.path.isdir(git.workdir):
@@ -52,16 +53,20 @@ def build_project(project_name):
         tags = []
 
     last_commit = git.last_commit()
-    if len(tags) > 0 or project.last_commit != last_commit:
-        build = Builder(project)
 
+    if tags[-1] != None:
+        project.last_tag = tags[-1]
+        build = 1
+
+    if project.last_commit != last_commit and build == 0:
+        project.last_commit = last_commit
+        build = 1
+    
+    if build == 1:
+        build = Builder(project)
         if project.repository_url:
             build.upload_to(repository_url)
         
-        if len(tags) > 0:
-            project.last_tag = tags[-1]
-        
-        project.last_commit = last_commit
     project.save()
 
 def schedule_projects():
