@@ -58,7 +58,7 @@ def build_project(project_name):
         project.last_tag = tags[-1]
         build = 1
 
-    if project.last_commit != last_commit and build == 0:
+    if project.last_commit != last_commit:
         project.last_commit = last_commit
         build = 1
     
