@@ -25,7 +25,7 @@ _scheduler = Scheduler()
 _sched_running = True
 
 def sort_tags(tag):
-    if tag != None and tag.startswith('hudson'):
+    if tag and tag.startswith('hudson'):
         return int(tag.split('-')[-1])
         
 
