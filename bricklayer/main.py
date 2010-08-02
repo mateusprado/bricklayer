@@ -54,9 +54,10 @@ def build_project(project_name):
 
     last_commit = git.last_commit()
 
-    if len(tags) > 0 and project.last_tag != tags[-1]:
-        project.last_tag = tags[-1]
-        build = 1
+    if len(tags) > 0:
+        if project.last_tag != tags[-1]:
+            project.last_tag = tags[-1]
+            build = 1
 
     if project.last_commit != last_commit:
         project.last_commit = last_commit
