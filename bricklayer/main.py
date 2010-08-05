@@ -112,7 +112,7 @@ def main_function():
     
     with context:
         if os.path.isdir('/var/run'):
-            pidfile = open('/var/run/bricklayerd.pid')
+            pidfile = open('/var/run/bricklayerd.pid', 'a')
             pidfile.write(os.getpid())
             pidfile.close()
 
