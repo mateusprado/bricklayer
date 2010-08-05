@@ -28,7 +28,7 @@ class Git:
         try:
             tagdir = os.path.join(self.workdir, '.git', 'refs', 'tags')
             return os.listdir(tagdir)
-        except IOError, e:
+        except Exception, e:
             return []
 
     def create_tag(self, tag=''):
