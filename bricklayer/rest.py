@@ -35,7 +35,8 @@ def project_post():
             main.build_project(project.name)            
             return {'status': 'ok'}
         except Exception, e:
-            return {'status': "error: %s" % repr(e)}
+            logging.error(repr(e))
+            return {'status': "fail"}
     else:
         return {'status':  "Project already exists"}
 

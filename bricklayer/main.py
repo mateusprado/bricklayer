@@ -25,8 +25,9 @@ _scheduler = Scheduler()
 _sched_running = True
 
 def sort_tags(tag):
-    if tag and tag.startswith('hudson'):
-        return int(tag.split('-')[-1])
+    if tag != None:
+        if tag.startswith('hudson'):
+            return int(tag.split('-')[-1])
         
 
 def build_project(project_name):
@@ -110,7 +111,7 @@ def main_function():
         }
     
     with context:
-        if os.path.is_dir('/var/run'):
+        if os.path.isdir('/var/run'):
             pidfile = open('/var/run/bricklayerd.pid')
             pidfile.write(os.getpid())
             pidfile.close()
