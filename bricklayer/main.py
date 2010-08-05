@@ -35,6 +35,7 @@ def build_project(project_name):
     git = Git(project)
     build = 0
     tags = []
+    unsorted_tags = git.list_tags()
     
     try:
         if not os.path.isdir(git.workdir):
@@ -46,9 +47,10 @@ def build_project(project_name):
         raise
 
     try:
-        tags = sorted(git.list_tags(), key=sort_tags)
-        if len(tags) > 0:
-            logging.debug('Last tag found: %s', tags[-1])
+        if len(unsorted_tags) > 0:
+            tags = sorted(unsorted_tags, key=sort_tags)
+            if len(tags) > 0:
+                logging.debug('Last tag found: %s', tags[-1])
     except Exception, e:
         logging.info('No tags available : %s', repr(e))
         tags = []
