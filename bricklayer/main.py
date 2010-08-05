@@ -113,7 +113,7 @@ def main_function():
     with context:
         if os.path.isdir('/var/run'):
             pidfile = open('/var/run/bricklayerd.pid', 'a')
-            pidfile.write(os.getpid())
+            pidfile.write(str(os.getpid()))
             pidfile.close()
 
         sched_thread = Process(target=schedule_projects)
