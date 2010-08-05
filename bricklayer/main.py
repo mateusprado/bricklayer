@@ -110,6 +110,11 @@ def main_function():
         }
     
     with context:
+        if os.path.is_dir('/var/run'):
+            pidfile = open('/var/run/bricklayerd.pid')
+            pidfile.write(os.getpid())
+            pidfile.close()
+
         sched_thread = Process(target=schedule_projects)
         sched_thread.start()
         rest_thread = Process(target=rest.run, args=[sched_thread.pid])
