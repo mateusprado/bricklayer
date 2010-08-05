@@ -35,7 +35,7 @@ def project_post():
             main.build_project(project.name)            
             return {'status': 'ok'}
         except Exception, e:
-            logging.error(repr(e))
+            logging.exception(repr(e))
             return {'status': "fail"}
     else:
         return {'status':  "Project already exists"}
@@ -51,7 +51,8 @@ def project_put(name):
         main.build_project(project.name)
         return {'status': 'ok'}
     except Exception, e:
-        return {'status': repr(e)}
+        logging.exception(repr(e))
+        return {'status': 'fail'}
 
 @route('/project/:name', method='GET')
 def project_get(name):
@@ -71,7 +72,7 @@ def project_delete(name):
         project = Projects().get(name)
         project.delete()
     except Exception, e:
-        raise e
+        logging.exception(repr(e))
 
 def run(parent_pid):
     global _parent_pid
