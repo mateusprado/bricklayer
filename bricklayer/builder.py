@@ -37,7 +37,7 @@ class Builder:
             if self.project.install_prefix is None:
                 self.project.install_prefix = 'opt'
 
-            self.project.install_cmd = 'cp -r $(ls | grep -v debian) debian/%s/%s' % (
+            self.project.install_cmd = 'cp -r `ls | grep -v debian` debian/%s/%s' % (
                     self.project.name, 
                     self.project.install_prefix
                 )
