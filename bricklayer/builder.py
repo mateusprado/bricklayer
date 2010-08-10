@@ -8,11 +8,12 @@ import ConfigParser
 
 from git import Git
 from config import BrickConfig
+from projects import Projects
 
 class Builder:
     def __init__(self, project):
         self.workspace = BrickConfig().get('workspace', 'dir')
-	self.project = Project.get(project)
+	    self.project = Projects.get(project)
         self.workdir = os.path.join(self.workspace, self.project.name) 
         os.chdir(self.workdir)
 
