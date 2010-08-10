@@ -1,6 +1,7 @@
 from __future__ import with_statement
-import sys, os
+import sys, os, logging
 sys.path.append(os.path.join(os.path.dirname(__file__), 'utils'))
+sys.path.append(os.path.dirname(__file__))
 
 from twisted.application import internet, service
 from twisted.internet import reactor, defer, protocol, task
@@ -19,7 +20,7 @@ _scheduler = Scheduler()
 _sched_running = True
 
 
-class BricklayerProtocol(basic.lineReceiver):
+class BricklayerProtocol(basic.LineReceiver):
     def lineReceived(self, project_name):
         self.factory.buildProject(project_name)
     
