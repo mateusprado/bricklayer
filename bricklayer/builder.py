@@ -11,19 +11,53 @@ from config import BrickConfig
 
 class Builder:
     def __init__(self, project):
+        self.workspace = BrickConfig().get('workspace', 'dir')
+        self.project = project
+        self.workdir = os.path.join(self.workspace, self.project.name) 
+        os.chdir(self.workdir)
+
+    def build_project(self):
+        git = Git(self.project)
+        build = 0
+        tags = git.tags()
+        
         try:
-            self.workspace = BrickConfig().get('workspace', 'dir')
-            self.project = project
-            self.workdir = os.path.join(self.workspace, self.project.name) 
-            os.chdir(self.workdir)
+            if not os.path.isdir(git.workdir):
+                git.clone()
+            else:
+                git.pull()
+        except Exception, e:
+            logging.error('Could not clone or update repository')
+            raise
 
-            logging.getLogger('builder').debug('Building project %s on %s', self.project, self.workdir)
-            self.rpm()
-            self.deb()
-            self.upload_to()
+        tags = git.tags()
+        if len(tags) > 0:
+            logging.debug('Last tag found: %s', tags[-1])
 
-        except Exception, e: 
-            raise e
+        last_commit = git.last_commit()
+
+        if len(tags) > 0:
+            if self.project.last_tag != tags[-1]:
+                self.project.last_tag = tags[-1]
+                build = 1
+
+        if self.project.last_commit != last_commit:
+            self.project.last_commit = last_commit
+            build = 1
+        
+        if build == 1:
+            build = Builder(self.project)
+            if self.project.repository_url:
+                build.upload_to(repository_url)
+            
+        self.project.save()
+
+        logging.getLogger('builder').debug('Generating packages for %s on %s', self.project, self.workdir)
+
+        self.rpm()
+        self.deb()
+        self.upload_to()
+
 
     def rpm(self):
         pass

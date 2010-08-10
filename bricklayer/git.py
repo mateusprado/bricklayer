@@ -12,6 +12,11 @@ class Git:
             stdout = open('/dev/null', 'w')
         return subprocess.Popen(cmd, cwd=cwd, stdout=stdout)
 
+    def _sort_tags(self, tag):
+        if tag != None:
+            if tag.startswith('hudson'):
+                return int(tag.split('-')[-1])
+
     def clone(self):
         logging.debug("Git clone")
         git_cmd = self._exec_git(['git', 'clone', self.project.git_url, self.workdir])
@@ -24,10 +29,11 @@ class Git:
     def last_commit(self):
         return open(os.path.join(self.workdir, '.git', 'refs', 'heads', 'master')).read()
 
-    def list_tags(self):
+    def tags(self):
         try:
             tagdir = os.path.join(self.workdir, '.git', 'refs', 'tags')
-            return os.listdir(tagdir)
+            tags = os.listdir(tagdir)
+            return sorted(tags, key=_sort_tags)
         except Exception, e:
             return []
 

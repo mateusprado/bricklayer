@@ -2,16 +2,10 @@ from __future__ import with_statement
 import sys, os
 sys.path.append(os.path.join(os.path.dirname(__file__), 'utils'))
 
-import subprocess
-import signal
-import daemon
-import lockfile
-import time
-import logging
-from threading import Thread, activeCount
-from multiprocessing import Process
+from twisted.application import internet, service
+from twisted.internet import reactor, defer, protocol, task
+from twisted.protocols import basic
 
-import rest
 from kronos import Scheduler, method
 from builder import Builder
 from projects import Projects
@@ -24,50 +18,27 @@ logging.basicConfig(level=logging.DEBUG)
 _scheduler = Scheduler()
 _sched_running = True
 
-def sort_tags(tag):
-    if tag != None:
-        if tag.startswith('hudson'):
-            return int(tag.split('-')[-1])
-        
 
-def build_project(project_name):
-    project = Projects.get(project_name)
-    git = Git(project)
-    build = 0
-    tags = []
-    unsorted_tags = git.list_tags()
+class BricklayerProtocol(basic.lineReceiver):
+    def lineReceived(self, project_name):
+        self.factory.buildProject(project_name)
     
-    try:
-        if not os.path.isdir(git.workdir):
-            git.clone()
-        else:
-            git.pull()
-    except Exception, e:
-        logging.error('Could not clone or update repository')
-        raise
+    def connectionMade(self):
+        pass
 
-    if len(unsorted_tags) > 0:
-        tags = sorted(unsorted_tags, key=sort_tags)
-        if len(tags) > 0:
-            logging.debug('Last tag found: %s', tags[-1])
-
-    last_commit = git.last_commit()
-
-    if len(tags) > 0:
-        if project.last_tag != tags[-1]:
-            project.last_tag = tags[-1]
-            build = 1
-
-    if project.last_commit != last_commit:
-        project.last_commit = last_commit
-        build = 1
+class BricklayerFactory(protocol.ServerFactory):
+    protocol = BricklayerProtocol
     
-    if build == 1:
-        build = Builder(project)
-        if project.repository_url:
-            build.upload_to(repository_url)
-        
-    project.save()
+    def __init__(self):
+        self.projects = Projects.get_all()
+
+    def buildProject(self, project_name):
+        builder = Builder(project_name)
+        builder.build_project()
+
+    def schedProject(self, project_name):
+        pass
+
 
 def schedule_projects():
     while _sched_running:
@@ -97,33 +68,7 @@ def stop_scheduler(sig, action):
     _scheduler.stop()
     sys.exit(0)
 
-def main_function():
-
-    context = daemon.DaemonContext()
-    context.stderr = context.stdout = open('/var/log/bricklayer.log', 'a')
-    context.working_directory = os.path.abspath(os.path.curdir)
-
-    context.signal_map = {
-            signal.SIGHUP: reload_scheduler,
-            signal.SIGINT: stop_scheduler,
-        }
-    
-    with context:
-        if os.path.isdir('/var/run'):
-            pidfile = open('/var/run/bricklayerd.pid', 'a')
-            pidfile.write(str(os.getpid()))
-            pidfile.close()
-
-        sched_thread = Process(target=schedule_projects)
-        sched_thread.start()
-        rest_thread = Process(target=rest.run, args=[sched_thread.pid])
-        rest_thread.start()
-
-        #while True:
-        #    logging.debug("Threads running: %s", activeChildren())
-        #    time.sleep(60)
-    
-
-if __name__ == '__main__':
-    main_function()
-
+application = service.Application("Bricklayer")
+factory = BricklayerFactory()
+internet.TCPServer(8080, factory).setServiceParent(
+        service.IServiceCollection(application))

@@ -33,6 +33,7 @@ def project_post():
             project.save()
             logging.info('Project created: %s', project.name)
             main.build_project(project.name)            
+            logging.info('Project %s build is done', project.name)
             return {'status': 'ok'}
         except Exception, e:
             logging.exception(repr(e))
