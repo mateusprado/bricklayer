@@ -6,6 +6,10 @@ from nose.tools import *
 sys.path.append('../bricklayer')
 sys.path.append('../bricklayer/utils')
 
+class BrickConfig(object):
+    def get(self, category, field):
+        print category, field
+
 from projects import Projects
 
 def teardown():
@@ -13,6 +17,7 @@ def teardown():
     _config_file.read(['config/bricklayer.ini'])
     os.unlink(_config_file.get('databases', 'uri').split('/')[-1])
    
+
 
 class project_test:
      

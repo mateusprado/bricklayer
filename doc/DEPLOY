@@ -1,0 +1,5 @@
+# get things working
+
+$ sudo apt-get install python-setuptools python-dev
+$ sudo easy_install-2.5 pip
+$ sudo pip install multiprocessing

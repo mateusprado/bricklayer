@@ -9,7 +9,7 @@ sys.path.append(os.path.dirname(__file__))
 import daemon
 import lockfile
 import bottle
-import main
+import bricklayer
 from bottle import route, request, PasteServer
 from projects import Projects
 from builder import Builder

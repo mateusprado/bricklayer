@@ -28,13 +28,14 @@ def synchronized(lock):
     return wrapper
 
 class Session:
-    _engine = create_engine(BrickConfig().get('databases', 'uri'), poolclass=SingletonThreadPool)
+    _engine = None
 
     _session_maker = scoped_session(sessionmaker())
     _session_maker.configure(bind=_engine)
     _session = None
     
     def __init__(self):
+        _engine = create_engine(BrickConfig().get('databases', 'uri'), poolclass=SingletonThreadPool)
         self._session = self._session_maker()
 
     def get(self):

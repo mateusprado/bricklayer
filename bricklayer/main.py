@@ -11,119 +11,71 @@ import logging
 from threading import Thread, activeCount
 from multiprocessing import Process
 
-import rest
+from rest import run
 from kronos import Scheduler, method
 from builder import Builder
 from projects import Projects
-from git import Git
+
+import bricklayer
 
 
-_log_file = '/tmp/build_project.out'
-logging.basicConfig(level=logging.DEBUG)
+def parse_cmdline():
+    from optparse import OptionParser
+    parser = OptionParser()
 
-_scheduler = Scheduler()
-_sched_running = True
-
-def sort_tags(tag):
-    if tag != None:
-        if tag.startswith('hudson'):
-            return int(tag.split('-')[-1])
-        
-
-def build_project(project_name):
-    project = Projects.get(project_name)
-    git = Git(project)
-    build = 0
-    tags = []
-    unsorted_tags = git.list_tags()
-    
-    try:
-        if not os.path.isdir(git.workdir):
-            git.clone()
-        else:
-            git.pull()
-    except Exception, e:
-        logging.error('Could not clone or update repository')
-        raise
-
-    if len(unsorted_tags) > 0:
-        tags = sorted(unsorted_tags, key=sort_tags)
-        if len(tags) > 0:
-            logging.debug('Last tag found: %s', tags[-1])
-
-    last_commit = git.last_commit()
-
-    if len(tags) > 0:
-        if project.last_tag != tags[-1]:
-            project.last_tag = tags[-1]
-            build = 1
-
-    if project.last_commit != last_commit:
-        project.last_commit = last_commit
-        build = 1
-    
-    if build == 1:
-        build = Builder(project)
-        if project.repository_url:
-            build.upload_to(repository_url)
-        
-    project.save()
-
-def schedule_projects():
-    while _sched_running:
-        logging.debug("starting scheduler pid %d", os.getpid())
-        projects = Projects.get_all()
-        for project in projects:
-            logging.debug('scheduling %s', project)
-            _scheduler.add_interval_task(
-                    build_project, 
-                    project.name, 
-                    initialdelay=0,
-                    interval=60 * 10,
-                    processmethod=method.threaded, 
-                    args=[project.name], kw=None)
-        _scheduler.start()
-
-def reload_scheduler(sig, action):
-    logging.debug('reload scheduler')
-    global _sched_running, _scheduler
-    _scheduler.stop()
-    _scheduler = Scheduler()
-
-def stop_scheduler(sig, action):
-    logging.debug('terminating')
-    global _sched_running
-    _sched_running = False
-    _scheduler.stop()
-    sys.exit(0)
+    parser.add_option("-l", "", dest="logfile", help="log file", metavar="")
+    parser.add_option("-p", "", dest="pidfile", help="pid file", metavar="")
+    parser.add_option("-c", "", dest="configfile", help="config file", metavar="")
+    parser.add_option("-d", "", action="store", dest="notdaemon", default=True, metavar="")
+    return parser.parse_args()
 
 def main_function():
 
-    context = daemon.DaemonContext()
-    context.stderr = context.stdout = open('/var/log/bricklayer.log', 'a')
+    (options, args) = parse_cmdline()
+
+    logfile = options.logfile
+    pidfile = options.pidfile
+    configfile = options.configfile
+    notdaemon = options.configfile
+
+    if not options.logfile:
+        logfile = '/var/log/bricklayer.log'
+
+    if not options.pidfile:
+        pidfile = '/var/run/bricklayerd.pid'
+
+    if not options.configfile:
+        configfile = '/etc/bricklayer/bricklayer.ini'
+
+    print "pidfile:", pidfile, "logfile:", logfile, "configfile:", configfile
+
+    context = daemon.DaemonContext(detach_process=False)
+    context.stderr = context.stdout = open(logfile, 'a')
     context.working_directory = os.path.abspath(os.path.curdir)
+    context.detach_process = True
+    if notdaemon:
+        context.detach_process = False
 
     context.signal_map = {
-            signal.SIGHUP: reload_scheduler,
-            signal.SIGINT: stop_scheduler,
+            signal.SIGHUP: bricklayer.reload_scheduler,
+            signal.SIGINT: bricklayer.stop_scheduler,
         }
     
     with context:
-        if os.path.isdir('/var/run'):
-            pidfile = open('/var/run/bricklayerd.pid', 'a')
-            pidfile.write(str(os.getpid()))
-            pidfile.close()
+#        if os.path.isdir('/var/run'):
+        pidfile = open(pidfile, 'a')
+        pidfile.write(str(os.getpid()))
+        pidfile.close()
 
-        sched_thread = Process(target=schedule_projects)
+        sched_thread = Process(target=bricklayer.schedule_projects)
         sched_thread.start()
         rest_thread = Process(target=rest.run, args=[sched_thread.pid])
         rest_thread.start()
 
-        #while True:
-        #    logging.debug("Threads running: %s", activeChildren())
-        #    time.sleep(60)
+#        while True:
+#            logging.debug("Threads running: %s", activeChildren())
+#            time.sleep(60)
     
 
 if __name__ == '__main__':
     main_function()
-

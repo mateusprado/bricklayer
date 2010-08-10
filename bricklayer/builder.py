@@ -6,7 +6,7 @@ import time
 import glob
 import ConfigParser
 
-from git import Git
+import git
 from config import BrickConfig
 
 class Builder:
@@ -75,7 +75,7 @@ class Builder:
         dch_cmd = subprocess.Popen(['dch', '-i', '** Snapshot commits'], cwd=self.workdir)
         dch_cmd.wait()
         
-        for log in Git(self.project).log():
+        for log in git.Git(self.project).log():
             append_log = subprocess.Popen(['dch', '-a', log], cwd=self.workdir)
             append_log.wait()
         
@@ -101,6 +101,6 @@ class Builder:
     def promote_to(self, release):
         self.project.release = release
         self.project.save()
-        Git(self.project).create_tag("%s/%s" % (release, self.project.version))
+        git.Git(self.project).create_tag("%s/%s" % (release, self.project.version))
         dch_cmd = subprocess.Popen(['dch', '-r', '--no-force-save-on-release', '-d', release], cwd=self.workdir)
         dch_cmd.wait()
