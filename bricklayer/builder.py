@@ -46,18 +46,16 @@ class Builder:
             self.project.last_commit = last_commit
             build = 1
         
-        if build == 1:
-            build = Builder(self.project)
-            if self.project.repository_url:
-                build.upload_to(repository_url)
             
         self.project.save()
 
         logging.getLogger('builder').debug('Generating packages for %s on %s', self.project, self.workdir)
 
-        self.rpm()
-        self.deb()
-        self.upload_to()
+
+        if build == 1:
+            self.rpm()
+            self.deb()
+            self.upload_to()
 
 
     def rpm(self):
