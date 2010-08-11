@@ -21,7 +21,7 @@ class Builder:
         git = Git(self.project)
         if force:
             build = 1
-        else
+        else:
             build = 0
 
         tags = git.tags()
