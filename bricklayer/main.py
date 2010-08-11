@@ -1,5 +1,8 @@
 import sys, os, logging
+sys.path.append(os.path.join(os.path.dirname(__file__), 'utils'))
 sys.path.append(os.path.dirname(__file__))
+
+import pystache
 
 from twisted.application import internet, service
 from twisted.internet import defer, protocol, task
