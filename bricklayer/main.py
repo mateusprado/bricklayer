@@ -38,7 +38,7 @@ class BricklayerFactory(protocol.ServerFactory):
 
     def buildProject(self, project_name, force=False):
         builder = Builder(project_name)
-        return = defer.succeed(builder.build_project(force=force))
+        return defer.succeed(builder.build_project(force=force))
 
     def schedProjects(self):
         for project in self.projects:
