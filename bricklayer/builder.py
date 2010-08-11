@@ -17,9 +17,13 @@ class Builder:
         self.workdir = os.path.join(self.workspace, self.project.name) 
         os.chdir(self.workdir)
 
-    def build_project(self):
+    def build_project(self, force=False):
         git = Git(self.project)
-        build = 0
+        if force:
+            build = 1
+        else
+            build = 0
+
         tags = git.tags()
         
         try:
