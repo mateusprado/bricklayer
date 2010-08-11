@@ -37,35 +37,34 @@ class Builder:
                 raise
 
             tags = git.tags()
-            if len(tags) > 0:
-                logging.debug('Last tag found: %s', tags[-1])
 
             last_commit = git.last_commit()
 
             if len(tags) > 0:
+                logging.debug('Last tag found: %s', tags[-1])
                 if self.project.last_tag != tags[-1]:
                     self.project.last_tag = tags[-1]
+                    git.checkout(self.project.last_tag)
                     build = 1
 
-            if self.project.last_commit != last_commit:
+            if self.project.last_tag == None and self.project.last_commit != last_commit:
                 self.project.last_commit = last_commit
                 build = 1
-            
                 
             self.project.save()
 
             logging.getLogger('builder').debug('Generating packages for %s on %s', self.project, self.workdir)
 
-
             if build == 1:
                 self.rpm()
                 self.deb()
                 self.upload_to()
-            
-            return True
+
+            git.checkout('master') 
+            logging.info("build complete")
         
         except Exception, e:
-            return False
+            logging.exception("build failed: %s", repr(e))
 
     def rpm(self):
         pass

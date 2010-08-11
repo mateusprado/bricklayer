@@ -48,7 +48,7 @@ class BricklayerFactory(protocol.ServerFactory):
         for project in self.projects:
             projectBuilder = Builder(project.name)
             self.taskProjects[project.name] = task.LoopingCall(projectBuilder.build_project)
-            self.taskProjects[project.name].start(18000)
+            self.taskProjects[project.name].start(300.0)
 
 application = service.Application("Bricklayer")
 factory = BricklayerFactory()

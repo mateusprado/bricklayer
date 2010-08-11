@@ -25,7 +25,11 @@ class Git:
     def pull(self):
         git_cmd = self._exec_git(['git', 'pull'], cwd=self.workdir)
         git_cmd.wait()
-        
+    
+    def checkout(self, tag='master'):
+        git_cmd = self._exec_git(['git', 'checkout', tag], cwd=self.workdir)
+        git_cmd.wait()
+
     def last_commit(self):
         return open(os.path.join(self.workdir, '.git', 'refs', 'heads', 'master')).read()
 
