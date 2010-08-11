@@ -21,8 +21,11 @@ _sched_running = True
 
 
 class BricklayerProtocol(basic.LineReceiver):
-    def lineReceived(self, project_name):
-        self.factory.buildProject(project_name)
+    def lineReceived(self, line):
+        command, arg = line.split(':')
+        if 'build' in command:
+            project_name = arg
+            self.factory.buildProject(project_name)
     
     def connectionMade(self):
         pass
@@ -32,42 +35,17 @@ class BricklayerFactory(protocol.ServerFactory):
     
     def __init__(self):
         self.projects = Projects.get_all()
+        self.taskProjects = {}
 
     def buildProject(self, project_name):
         builder = Builder(project_name)
         builder.build_project()
 
-    def schedProject(self, project_name):
-        pass
-
-
-def schedule_projects():
-    while _sched_running:
-        logging.debug("starting scheduler pid %d", os.getpid())
-        projects = Projects.get_all()
-        for project in projects:
-            logging.debug('scheduling %s', project)
-            _scheduler.add_interval_task(
-                    build_project, 
-                    project.name, 
-                    initialdelay=0,
-                    interval=60 * 10,
-                    processmethod=method.threaded, 
-                    args=[project.name], kw=None)
-        _scheduler.start()
-
-def reload_scheduler(sig, action):
-    logging.debug('reload scheduler')
-    global _sched_running, _scheduler
-    _scheduler.stop()
-    _scheduler = Scheduler()
-
-def stop_scheduler(sig, action):
-    logging.debug('terminating')
-    global _sched_running
-    _sched_running = False
-    _scheduler.stop()
-    sys.exit(0)
+    def schedProjects(self):
+        for project in self.projects:
+            projectBuilder = Builder(project.name)
+            self.taskProjects[project.name] = task.LoopingCall(projectBuilder.build_project)
+            self.taskProjects[project.name].start(18000)
 
 application = service.Application("Bricklayer")
 factory = BricklayerFactory()
