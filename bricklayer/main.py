@@ -36,6 +36,7 @@ class BricklayerFactory(protocol.ServerFactory):
     def __init__(self):
         self.projects = Projects.get_all()
         self.taskProjects = {}
+        self.schedProjects()
 
     def buildProject(self, project_name):
         builder = Builder(project_name)
