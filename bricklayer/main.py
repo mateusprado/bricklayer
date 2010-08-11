@@ -27,6 +27,7 @@ class BricklayerProtocol(basic.LineReceiver):
         if 'build' in command:
             project_name = arg
             defered = self.factory.buildProject(project_name, force=True)
+            defered.addCallback(onResponse, onError)
     
     def connectionMade(self):
         pass
