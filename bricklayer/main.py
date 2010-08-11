@@ -1,31 +1,29 @@
-from __future__ import with_statement
 import sys, os, logging
-sys.path.append(os.path.join(os.path.dirname(__file__), 'utils'))
 sys.path.append(os.path.dirname(__file__))
 
 from twisted.application import internet, service
-from twisted.internet import reactor, defer, protocol, task
+from twisted.internet import defer, protocol, task
 from twisted.protocols import basic
 
-from kronos import Scheduler, method
 from builder import Builder
 from projects import Projects
 from git import Git
 
 
-_log_file = '/tmp/build_project.out'
 logging.basicConfig(level=logging.DEBUG)
-
-_scheduler = Scheduler()
-_sched_running = True
-
 
 class BricklayerProtocol(basic.LineReceiver):
     def lineReceived(self, line):
+        def onError(err):
+            logging.error("Command fail")
+
+        def onResponse(message):
+            self.transport.write("ok.\r\n")
+
         command, arg = line.split(':')
         if 'build' in command:
             project_name = arg
-            self.factory.buildProject(project_name, force=True)
+            defered = self.factory.buildProject(project_name, force=True)
     
     def connectionMade(self):
         pass
@@ -40,7 +38,7 @@ class BricklayerFactory(protocol.ServerFactory):
 
     def buildProject(self, project_name, force=False):
         builder = Builder(project_name)
-        builder.build_project(force=force)
+        return = defer.succeed(builder.build_project(force=force))
 
     def schedProjects(self):
         for project in self.projects:

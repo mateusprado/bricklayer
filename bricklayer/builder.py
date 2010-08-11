@@ -18,49 +18,54 @@ class Builder:
         os.chdir(self.workdir)
 
     def build_project(self, force=False):
-        git = Git(self.project)
-        if force:
-            build = 1
-        else:
-            build = 0
-
-        tags = git.tags()
-        
         try:
-            if not os.path.isdir(git.workdir):
-                git.clone()
-            else:
-                git.pull()
-        except Exception, e:
-            logging.error('Could not clone or update repository')
-            raise
-
-        tags = git.tags()
-        if len(tags) > 0:
-            logging.debug('Last tag found: %s', tags[-1])
-
-        last_commit = git.last_commit()
-
-        if len(tags) > 0:
-            if self.project.last_tag != tags[-1]:
-                self.project.last_tag = tags[-1]
+            git = Git(self.project)
+            if force:
                 build = 1
+            else:
+                build = 0
 
-        if self.project.last_commit != last_commit:
-            self.project.last_commit = last_commit
-            build = 1
-        
+            tags = git.tags()
             
-        self.project.save()
+            try:
+                if not os.path.isdir(git.workdir):
+                    git.clone()
+                else:
+                    git.pull()
+            except Exception, e:
+                logging.error('Could not clone or update repository')
+                raise
 
-        logging.getLogger('builder').debug('Generating packages for %s on %s', self.project, self.workdir)
+            tags = git.tags()
+            if len(tags) > 0:
+                logging.debug('Last tag found: %s', tags[-1])
+
+            last_commit = git.last_commit()
+
+            if len(tags) > 0:
+                if self.project.last_tag != tags[-1]:
+                    self.project.last_tag = tags[-1]
+                    build = 1
+
+            if self.project.last_commit != last_commit:
+                self.project.last_commit = last_commit
+                build = 1
+            
+                
+            self.project.save()
+
+            logging.getLogger('builder').debug('Generating packages for %s on %s', self.project, self.workdir)
 
 
-        if build == 1:
-            self.rpm()
-            self.deb()
-            self.upload_to()
-
+            if build == 1:
+                self.rpm()
+                self.deb()
+                self.upload_to()
+            
+            return True
+        
+        except Exception, e:
+            return False
 
     def rpm(self):
         pass
