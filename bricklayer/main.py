@@ -18,9 +18,9 @@ logging.basicConfig(level=logging.DEBUG)
 class BricklayerProtocol(basic.LineReceiver):
     def lineReceived(self, line):
         def onError(err):
-            logging.error("Command fail")
+            logging.error("Command fail.")
 
-        def onResponse(message):
+        def onResponse(message, *args, **kwargs):
             self.transport.write("ok.\r\n")
 
         command, arg = line.split(':')

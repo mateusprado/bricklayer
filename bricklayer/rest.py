@@ -6,16 +6,10 @@ import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), 'utils'))
 sys.path.append(os.path.dirname(__file__))
-import daemon
-import lockfile
-import bottle
-import main
+
 from bottle import route, request, PasteServer
 from projects import Projects
 from builder import Builder
-
-
-_parent_pid = None
 
 @route('/project', method='POST')
 def project_post():
@@ -23,6 +17,7 @@ def project_post():
         Projects().get(request.POST['name'])
     except Exception, e:
         project = Projects()
+        builder = Builder(project.name)
         project.name = request.POST.pop('name')
         project.git_url = request.POST.pop('git_url')
 
@@ -32,7 +27,7 @@ def project_post():
         try:
             project.save()
             logging.info('Project created: %s', project.name)
-            main.build_project(project.name)            
+            builder.build_project(force=True)            
             logging.info('Project %s build is done', project.name)
             return {'status': 'ok'}
         except Exception, e:
@@ -44,12 +39,13 @@ def project_post():
 @route('/project/:name', method='PUT')
 def project_put(name):
     project = Projects().get(name)
+    builder = Builder(project.name)
     for name, arg in request.POST.iteritems():
         setattr(project, name, arg)
 
     try:
         project.save()
-        main.build_project(project.name)
+        builder.build_project(force=True)
         return {'status': 'ok'}
     except Exception, e:
         logging.exception(repr(e))
@@ -75,10 +71,6 @@ def project_delete(name):
     except Exception, e:
         logging.exception(repr(e))
 
-def run(parent_pid):
-    global _parent_pid
-    _parent_pid = parent_pid
+def run():
     bottle.run(host='0.0.0.0')
 
-if __name__ == "__main__":
-    run()
