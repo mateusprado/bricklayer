@@ -38,9 +38,9 @@ class BricklayerFactory(protocol.ServerFactory):
         self.taskProjects = {}
         self.schedProjects()
 
-    def buildProject(self, project_name):
+    def buildProject(self, project_name, force=False):
         builder = Builder(project_name)
-        builder.build_project()
+        builder.build_project(force=force)
 
     def schedProjects(self):
         for project in self.projects:
