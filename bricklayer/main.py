@@ -25,7 +25,7 @@ class BricklayerProtocol(basic.LineReceiver):
         command, arg = line.split(':')
         if 'build' in command:
             project_name = arg
-            self.factory.buildProject(project_name)
+            self.factory.buildProject(project_name, force=True)
     
     def connectionMade(self):
         pass
