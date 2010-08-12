@@ -1,9 +1,13 @@
 import os, subprocess, logging
 from config import BrickConfig
-class Git:
 
-    def __init__(self, project, workdir=BrickConfig().get('workspace', 'dir'), branch='master'):
-        self.workdir = os.path.join(workdir, project.name)
+class Git(object):
+    def __init__(self, project, workdir=None, branch='master'):
+        _workdir = workdir
+        if not _workdir:
+            _workdir = BrickConfig().get('workspace', 'dir')
+
+        self.workdir = os.path.join(_workdir, project.name)
         self.project = project
         self.branch = branch
 
@@ -25,7 +29,11 @@ class Git:
     def pull(self):
         git_cmd = self._exec_git(['git', 'pull'], cwd=self.workdir)
         git_cmd.wait()
-        
+    
+    def checkout(self, tag='master'):
+        git_cmd = self._exec_git(['git', 'checkout', tag], cwd=self.workdir)
+        git_cmd.wait()
+
     def last_commit(self):
         return open(os.path.join(self.workdir, '.git', 'refs', 'heads', 'master')).read()
 
@@ -42,7 +50,8 @@ class Git:
         git_cmd.wait()
 
     def log(self, number=3):
-        git_cmd = self._exec_git(['git', 'log', '-n', str(number), '--pretty=oneline', '--abbrev-commit'], cwd=self.workdir, stdout=subprocess.PIPE)
+        git_cmd = self._exec_git(['git', 'log', '-n', str(number),
+             '--pretty=oneline', '--abbrev-commit'], cwd=self.workdir, stdout=subprocess.PIPE)
         git_cmd.wait()
         return git_cmd.stdout.readlines()
 

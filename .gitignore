@@ -1,2 +1,4 @@
 workspace
 *.pyc
+*/**.swp
+*.swp

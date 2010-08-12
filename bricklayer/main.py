@@ -1,28 +1,36 @@
-from __future__ import with_statement
 import sys, os, logging
 sys.path.append(os.path.join(os.path.dirname(__file__), 'utils'))
 sys.path.append(os.path.dirname(__file__))
 
+import pystache
+
 from twisted.application import internet, service
-from twisted.internet import reactor, defer, protocol, task
+from twisted.internet import defer, protocol, task
 from twisted.protocols import basic
 
-from kronos import Scheduler, method
 from builder import Builder
 from projects import Projects
-from git import Git
+from config import BrickConfig
 
-
-_log_file = '/tmp/build_project.out'
-logging.basicConfig(level=logging.DEBUG)
-
-_scheduler = Scheduler()
-_sched_running = True
-
+def parse_cmdline():
+    from optparse import OptionParser
+    parser = OptionParser()
+    parser.add_option("-c", "", dest="configfile", help="config file", metavar="")
+    return parser.parse_args()
 
 class BricklayerProtocol(basic.LineReceiver):
-    def lineReceived(self, project_name):
-        self.factory.buildProject(project_name)
+    def lineReceived(self, line):
+        def onError(err):
+            logging.error("Command fail.")
+
+        def onResponse(message, *args, **kwargs):
+            self.transport.write("ok.\r\n")
+
+        command, arg = line.split(':')
+        if 'build' in command:
+            project_name = arg
+            defered = self.factory.buildProject(project_name, force=True)
+            defered.addCallback(onResponse, onError)
     
     def connectionMade(self):
         pass
@@ -32,42 +40,24 @@ class BricklayerFactory(protocol.ServerFactory):
     
     def __init__(self):
         self.projects = Projects.get_all()
+        self.taskProjects = {}
+        self.schedProjects()
 
-    def buildProject(self, project_name):
+    def buildProject(self, project_name, force=False):
         builder = Builder(project_name)
-        builder.build_project()
+        return defer.succeed(builder.build_project(force=force))
 
-    def schedProject(self, project_name):
-        pass
+    def schedProjects(self):
+        for project in self.projects:
+            projectBuilder = Builder(project.name)
+            self.taskProjects[project.name] = task.LoopingCall(projectBuilder.build_project)
+            self.taskProjects[project.name].start(300.0)
 
+#(options, args) = parse_cmdline()
 
-def schedule_projects():
-    while _sched_running:
-        logging.debug("starting scheduler pid %d", os.getpid())
-        projects = Projects.get_all()
-        for project in projects:
-            logging.debug('scheduling %s', project)
-            _scheduler.add_interval_task(
-                    build_project, 
-                    project.name, 
-                    initialdelay=0,
-                    interval=60 * 10,
-                    processmethod=method.threaded, 
-                    args=[project.name], kw=None)
-        _scheduler.start()
-
-def reload_scheduler(sig, action):
-    logging.debug('reload scheduler')
-    global _sched_running, _scheduler
-    _scheduler.stop()
-    _scheduler = Scheduler()
-
-def stop_scheduler(sig, action):
-    logging.debug('terminating')
-    global _sched_running
-    _sched_running = False
-    _scheduler.stop()
-    sys.exit(0)
+#configfile = options.configfile
+configfile = '/etc/bricklayer/bricklayer.ini'
+brickconfig = BrickConfig(configfile)
 
 application = service.Application("Bricklayer")
 factory = BricklayerFactory()

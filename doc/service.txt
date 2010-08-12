@@ -1,0 +1,72 @@
+h1. Bricklayer
+
+
+h2. Core Concepts
+
+p.  core concepts
+
+
+h2. Formats
+
+
+* JSON
+
+
+h2. Request Methods
+
+h3. Projects - Retrieving information
+
+**URL:** http://bricklayer:8080/project/ _projectname_
+**Method:** GET
+**Parameters:** 'name'
+
+
+h4. Examples
+
+p().  examples examples examples
+
+bc().. 
+ $ curl http://bricklayer:8080/project/
+ {"last_tag": null, "version": "1.0-1.33", "last_commit": "0e76545b270adef87f7cc9ce91e6b0cf6b656340\n", "name": "bricklayer", "git_url": "git@git.locaweb.com.br:/bricklayer/bricklayer.git"}
+
+
+p(). x
+
+----
+
+h3. Projects - Creating a project
+
+**URL:** http://bricklayer:8080/project/ _projectname_
+**Method:** POST
+**Parameters:** 'name'
+
+
+h4. Examples
+
+p().  examples examples examples
+
+bc().. 
+ $ curl http://bricklayer:8080/project/
+ {"last_tag": null, "version": "1.0-1.33", "last_commit": "0e76545b270adef87f7cc9ce91e6b0cf6b656340\n", "name": "bricklayer", "git_url": "git@git.locaweb.com.br:/bricklayer/bricklayer.git"}
+
+
+p(). x
+----
+
+h3. Projects - Creating a project
+
+**URL:** http://bricklayer:8080/project/ _projectname_
+**Method:** PUT
+
+
+h4. Examples
+
+p().  examples examples examples
+
+bc().. 
+ $ curl http://bricklayer:8080/project/
+ {"last_tag": null, "version": "1.0-1.33", "last_commit": "0e76545b270adef87f7cc9ce91e6b0cf6b656340\n", "name": "bricklayer", "git_url": "git@git.locaweb.com.br:/bricklayer/bricklayer.git"}
+
+
+p(). x
+----
