@@ -12,12 +12,6 @@ from builder import Builder
 from projects import Projects
 from config import BrickConfig
 
-def parse_cmdline():
-    from optparse import OptionParser
-    parser = OptionParser()
-    parser.add_option("-c", "", dest="configfile", help="config file", metavar="")
-    return parser.parse_args()
-
 class BricklayerProtocol(basic.LineReceiver):
     def lineReceived(self, line):
         def onError(err):
@@ -53,10 +47,27 @@ class BricklayerFactory(protocol.ServerFactory):
             self.taskProjects[project.name] = task.LoopingCall(projectBuilder.build_project)
             self.taskProjects[project.name].start(300.0)
 
-#(options, args) = parse_cmdline()
+from twisted.python import usage
 
-#configfile = options.configfile
-configfile = '/etc/bricklayer/bricklayer.ini'
+class Options(usage.Options):
+    optParameters = [["configfile", "c", None, "Configuration file"]]
+
+options = Options()
+
+try:
+    options.parseOptions()
+except usage.UsageError, errortext:
+    print '%s: %s' % (sys.argv[0], errortext)
+    print '%s: --help for further details' % (sys.argv[0])
+    sys.exit(1)
+
+if not options['configfile']:
+    configfile = '/etc/bricklayer/bricklayer.ini'
+else:
+    configfile = options['configfile']
+
+#print configfile
+
 brickconfig = BrickConfig(configfile)
 
 application = service.Application("Bricklayer")
