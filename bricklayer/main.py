@@ -1,81 +1,65 @@
-from __future__ import with_statement
-import sys, os
+import sys, os, logging
 sys.path.append(os.path.join(os.path.dirname(__file__), 'utils'))
+sys.path.append(os.path.dirname(__file__))
 
-import subprocess
-import signal
-import daemon
-import lockfile
-import time
-import logging
-from threading import Thread, activeCount
-from multiprocessing import Process
+import pystache
 
-from rest import run
-from kronos import Scheduler, method
+from twisted.application import internet, service
+from twisted.internet import defer, protocol, task
+from twisted.protocols import basic
+
 from builder import Builder
 from projects import Projects
-
-import bricklayer
-
+from config import BrickConfig
 
 def parse_cmdline():
     from optparse import OptionParser
     parser = OptionParser()
-
-    parser.add_option("-l", "", dest="logfile", help="log file", metavar="")
-    parser.add_option("-p", "", dest="pidfile", help="pid file", metavar="")
     parser.add_option("-c", "", dest="configfile", help="config file", metavar="")
-    parser.add_option("-d", "", action="store", dest="notdaemon", default=True, metavar="")
     return parser.parse_args()
 
-def main_function():
+class BricklayerProtocol(basic.LineReceiver):
+    def lineReceived(self, line):
+        def onError(err):
+            logging.error("Command fail.")
 
-    (options, args) = parse_cmdline()
+        def onResponse(message, *args, **kwargs):
+            self.transport.write("ok.\r\n")
 
-    logfile = options.logfile
-    pidfile = options.pidfile
-    configfile = options.configfile
-    notdaemon = options.configfile
-
-    if not options.logfile:
-        logfile = '/var/log/bricklayer.log'
-
-    if not options.pidfile:
-        pidfile = '/var/run/bricklayerd.pid'
-
-    if not options.configfile:
-        configfile = '/etc/bricklayer/bricklayer.ini'
-
-    print "pidfile:", pidfile, "logfile:", logfile, "configfile:", configfile
-
-    context = daemon.DaemonContext(detach_process=False)
-    context.stderr = context.stdout = open(logfile, 'a')
-    context.working_directory = os.path.abspath(os.path.curdir)
-    context.detach_process = True
-    if notdaemon:
-        context.detach_process = False
-
-    context.signal_map = {
-            signal.SIGHUP: bricklayer.reload_scheduler,
-            signal.SIGINT: bricklayer.stop_scheduler,
-        }
+        command, arg = line.split(':')
+        if 'build' in command:
+            project_name = arg
+            defered = self.factory.buildProject(project_name, force=True)
+            defered.addCallback(onResponse, onError)
     
-    with context:
-#        if os.path.isdir('/var/run'):
-        pidfile = open(pidfile, 'a')
-        pidfile.write(str(os.getpid()))
-        pidfile.close()
+    def connectionMade(self):
+        pass
 
-        sched_thread = Process(target=bricklayer.schedule_projects)
-        sched_thread.start()
-        rest_thread = Process(target=rest.run, args=[sched_thread.pid])
-        rest_thread.start()
-
-#        while True:
-#            logging.debug("Threads running: %s", activeChildren())
-#            time.sleep(60)
+class BricklayerFactory(protocol.ServerFactory):
+    protocol = BricklayerProtocol
     
+    def __init__(self):
+        self.projects = Projects.get_all()
+        self.taskProjects = {}
+        self.schedProjects()
 
-if __name__ == '__main__':
-    main_function()
+    def buildProject(self, project_name, force=False):
+        builder = Builder(project_name)
+        return defer.succeed(builder.build_project(force=force))
+
+    def schedProjects(self):
+        for project in self.projects:
+            projectBuilder = Builder(project.name)
+            self.taskProjects[project.name] = task.LoopingCall(projectBuilder.build_project)
+            self.taskProjects[project.name].start(300.0)
+
+#(options, args) = parse_cmdline()
+
+#configfile = options.configfile
+configfile = '/etc/bricklayer/bricklayer.ini'
+brickconfig = BrickConfig(configfile)
+
+application = service.Application("Bricklayer")
+factory = BricklayerFactory()
+internet.TCPServer(8080, factory).setServiceParent(
+        service.IServiceCollection(application))

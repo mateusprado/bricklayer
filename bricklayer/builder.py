@@ -8,22 +8,63 @@ import ConfigParser
 
 import git
 from config import BrickConfig
+from projects import Projects
 
 class Builder:
     def __init__(self, project):
+        self.workspace = BrickConfig().get('workspace', 'dir')
+        self.project = Projects.get(project)
+        self.workdir = os.path.join(self.workspace, self.project.name) 
+        self.git = git.Git(self.project)
+        os.chdir(self.workdir)
+
+    def build_project(self, force=False):
         try:
-            self.workspace = BrickConfig().get('workspace', 'dir')
-            self.project = project
-            self.workdir = os.path.join(self.workspace, self.project.name) 
-            os.chdir(self.workdir)
+            if force:
+                build = 1
+            else:
+                build = 0
 
-            logging.getLogger('builder').debug('Building project %s on %s', self.project, self.workdir)
-            self.rpm()
-            self.deb()
-            self.upload_to()
+            tags = self.git.tags()
+            
+            try:
+                if not os.path.isdir(self.git.workdir):
+                    self.git.clone()
+                else:
+                    self.git.pull()
+            except Exception, e:
+                logging.error('Could not clone or update repository')
+                raise
 
-        except Exception, e: 
-            raise e
+            tags = self.git.tags()
+
+            last_commit = self.git.last_commit()
+
+            if len(tags) > 0:
+                logging.debug('Last tag found: %s', tags[-1])
+                if self.project.last_tag != tags[-1]:
+                    self.project.last_tag = tags[-1]
+                    self.git.checkout(self.project.last_tag)
+                    build = 1
+
+            if self.project.last_tag == None and self.project.last_commit != last_commit:
+                self.project.last_commit = last_commit
+                build = 1
+                
+            self.project.save()
+
+            logging.getLogger('builder').debug('Generating packages for %s on %s', self.project, self.workdir)
+
+            if build == 1:
+                self.rpm()
+                self.deb()
+                self.upload_to()
+
+            self.git.checkout('master') 
+            logging.info("build complete")
+        
+        except Exception, e:
+            logging.exception("build failed: %s", repr(e))
 
     def rpm(self):
         pass
@@ -75,7 +116,7 @@ class Builder:
         dch_cmd = subprocess.Popen(['dch', '-i', '** Snapshot commits'], cwd=self.workdir)
         dch_cmd.wait()
         
-        for log in git.Git(self.project).log():
+        for log in self.git.log():
             append_log = subprocess.Popen(['dch', '-a', log], cwd=self.workdir)
             append_log.wait()
         
@@ -101,6 +142,6 @@ class Builder:
     def promote_to(self, release):
         self.project.release = release
         self.project.save()
-        git.Git(self.project).create_tag("%s/%s" % (release, self.project.version))
+        self.git.create_tag("%s/%s" % (release, self.project.version))
         dch_cmd = subprocess.Popen(['dch', '-r', '--no-force-save-on-release', '-d', release], cwd=self.workdir)
         dch_cmd.wait()
