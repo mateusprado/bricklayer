@@ -47,26 +47,10 @@ class BricklayerFactory(protocol.ServerFactory):
             self.taskProjects[project.name] = task.LoopingCall(projectBuilder.build_project)
             self.taskProjects[project.name].start(300.0)
 
-from twisted.python import usage
-
-class Options(usage.Options):
-    optParameters = [["configfile", "c", None, "Configuration file"]]
-
-options = Options()
-
-try:
-    options.parseOptions()
-except usage.UsageError, errortext:
-    print '%s: %s' % (sys.argv[0], errortext)
-    print '%s: --help for further details' % (sys.argv[0])
-    sys.exit(1)
-
-if not options['configfile']:
-    configfile = '/etc/bricklayer/bricklayer.ini'
+if "BRICKLAYERCONFIG" in os.environ.keys():
+    configfile = os.environ['BRICKLAYERCONFIG']
 else:
-    configfile = options['configfile']
-
-#print configfile
+    configfile = '/etc/bricklayer/bricklayer.ini'
 
 brickconfig = BrickConfig(configfile)
 
