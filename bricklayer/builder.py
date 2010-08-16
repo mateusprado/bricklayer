@@ -16,7 +16,8 @@ class Builder:
         self.project = Projects.get(project)
         self.workdir = os.path.join(self.workspace, self.project.name) 
         self.git = git.Git(self.project)
-        os.chdir(self.workdir)
+        if os.path.isdir(self.workdir):
+            os.chdir(self.workdir)
 
     def build_project(self, force=False):
         try:
@@ -73,10 +74,10 @@ class Builder:
         templates = {}
         templates_dir = os.path.join(BrickConfig().get('workspace', 'template_dir'), 'deb')
         
-        if not self.project.install_cmd :
+        if self.project.install_prefix is None:
+            self.project.install_prefix = 'opt'
 
-            if self.project.install_prefix is None:
-                self.project.install_prefix = 'opt'
+        if not self.project.install_cmd :
 
             self.project.install_cmd = 'cp -r \`ls | grep -v debian\` debian/%s/%s' % (
                     self.project.name, 

@@ -11,6 +11,7 @@ from twisted.protocols import basic
 from builder import Builder
 from projects import Projects
 from config import BrickConfig
+from rest import restApp
 
 class BricklayerProtocol(basic.LineReceiver):
     def lineReceived(self, line):
@@ -54,7 +55,15 @@ else:
 
 brickconfig = BrickConfig(configfile)
 
-application = service.Application("Bricklayer")
+bricklayer = service.MultiService()
+
+
 factory = BricklayerFactory()
-internet.TCPServer(8080, factory).setServiceParent(
-        service.IServiceCollection(application))
+brickService = internet.TCPServer(8080, factory)
+restService = internet.TCPServer(80, restApp)
+
+brickService.setServiceParent(bricklayer)
+restService.setServiceParent(bricklayer)
+
+application = service.Application("Bricklayer")
+bricklayer.setServiceParent(application)
