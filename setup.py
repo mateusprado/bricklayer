@@ -10,7 +10,7 @@ for root, dirs, files in os.walk('pkg_template'):
 
 data_files_list = template_dir
 data_files_list.extend([
-        ('/etc/bricklayer/', ['config/bricklayer.ini', 'config/gpg.key']),
+        ('/etc/bricklayer/', ['config/bricklayer.ini', 'config/gpg.key', 'bricklayer/bricklayer.tac']),
         ('/var/lib/bricklayer/', ['db/bricklayer.db']),
     ]
 )
@@ -19,9 +19,4 @@ setup(
     version='1.0',
     packages=find_packages(), 
     data_files=data_files_list,
-    entry_points = {
-        'console_scripts': [
-            'bricklayerd = bricklayer.main:main_function',
-        ]
-    },
 )
