@@ -44,7 +44,7 @@ class Builder:
             last_commit = self.git.last_commit()
 
             if len(tags) > 0:
-                log.msg('Last tag found: %s', tags[-1])
+                log.msg('Last tag found: %s' % tags[-1])
                 if self.project.last_tag != tags[-1]:
                     self.project.last_tag = tags[-1]
                     self.git.checkout(self.project.last_tag)
@@ -56,7 +56,7 @@ class Builder:
                 
             self.project.save()
 
-            log.msg('Generating packages for %s on %s', self.project, self.workdir)
+            log.msg('Generating packages for %s on %s'  % (self.project, self.workdir))
 
             if build == 1:
                 self.rpm()
