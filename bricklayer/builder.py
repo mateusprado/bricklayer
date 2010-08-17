@@ -10,6 +10,11 @@ import git
 from config import BrickConfig
 from projects import Projects
 
+from twisted.python import log
+
+observer = log.PythonLoggingObserver()
+observer.start()
+
 class Builder:
     def __init__(self, project):
         self.workspace = BrickConfig().get('workspace', 'dir')
