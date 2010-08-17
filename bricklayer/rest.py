@@ -26,10 +26,10 @@ class Project(cyclone.web.RequestHandler):
 
             try:
                 project.save()
-                log.msg('Project created: %s', project.name)
+                log.msg('Project created:', project.name)
                 builder = Builder(project.name)
                 builder.build_project(force=True)            
-                log.msg('Project %s build is done', project.name)
+                log.msg('Project build is done', project.name)
                 self.write(cyclone.escape.json_encode({'status': 'ok'}))
             except Exception, e:
                 log.err()
