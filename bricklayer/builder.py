@@ -12,9 +12,6 @@ from projects import Projects
 
 from twisted.python import log
 
-observer = log.PythonLoggingObserver()
-observer.start()
-
 class Builder:
     def __init__(self, project):
         self.workspace = BrickConfig().get('workspace', 'dir')
@@ -39,7 +36,7 @@ class Builder:
                 else:
                     self.git.pull()
             except Exception, e:
-                logging.error('Could not clone or update repository')
+                log.err('Could not clone or update repository')
                 raise
 
             tags = self.git.tags()
@@ -47,7 +44,7 @@ class Builder:
             last_commit = self.git.last_commit()
 
             if len(tags) > 0:
-                logging.debug('Last tag found: %s', tags[-1])
+                log.msg('Last tag found: %s', tags[-1])
                 if self.project.last_tag != tags[-1]:
                     self.project.last_tag = tags[-1]
                     self.git.checkout(self.project.last_tag)
@@ -59,7 +56,7 @@ class Builder:
                 
             self.project.save()
 
-            logging.getLogger('builder').debug('Generating packages for %s on %s', self.project, self.workdir)
+            log.msg('Generating packages for %s on %s', self.project, self.workdir)
 
             if build == 1:
                 self.rpm()
@@ -67,10 +64,10 @@ class Builder:
                 self.upload_to()
 
             self.git.checkout('master') 
-            logging.info("build complete")
+            log.msg("build complete")
         
         except Exception, e:
-            logging.exception("build failed: %s", repr(e))
+            log.err("build failed: %s" % repr(e))
 
     def rpm(self):
         pass
@@ -122,8 +119,8 @@ class Builder:
         dch_cmd = subprocess.Popen(['dch', '-i', '** Snapshot commits'], cwd=self.workdir)
         dch_cmd.wait()
         
-        for log in self.git.log():
-            append_log = subprocess.Popen(['dch', '-a', log], cwd=self.workdir)
+        for git_log in self.git.log():
+            append_log = subprocess.Popen(['dch', '-a', git_log], cwd=self.workdir)
             append_log.wait()
         
         self.project.version = open(os.path.join(self.workdir, 'debian/changelog'), 'r').readline().split('(')[1].split(')')[0]
