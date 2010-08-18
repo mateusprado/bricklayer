@@ -33,6 +33,7 @@ class Builder:
                 else:
                     self.git.clone()
             except Exception, e:
+                log.err()
                 log.err('Could not clone or update repository')
                 raise
 
@@ -64,6 +65,7 @@ class Builder:
             log.msg("build complete")
         
         except Exception, e:
+            log.err()
             log.err("build failed: %s" % repr(e))
 
     def rpm(self):
