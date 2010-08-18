@@ -17,8 +17,6 @@ class Builder:
         self.project = Projects.get(project)
         self.workdir = os.path.join(self.workspace, self.project.name) 
         self.git = git.Git(self.project)
-        if os.path.isdir(self.workdir):
-            os.chdir(self.workdir)
 
     def build_project(self, force=False):
         try:
@@ -36,6 +34,9 @@ class Builder:
                 log.err()
                 log.err('Could not clone or update repository')
                 raise
+
+            if os.path.isdir(self.workdir):
+                os.chdir(self.workdir)
 
             tags = self.git.tags()
 
