@@ -1,5 +1,4 @@
 import os
-import logging
 import pystache
 import subprocess
 import time
@@ -27,14 +26,12 @@ class Builder:
                 build = 1
             else:
                 build = 0
-
-            tags = self.git.tags()
             
             try:
-                if not os.path.isdir(self.git.workdir):
-                    self.git.clone()
-                else:
+                if os.path.isdir(self.git.workdir):
                     self.git.pull()
+                else:
+                    self.git.clone()
             except Exception, e:
                 log.err('Could not clone or update repository')
                 raise
@@ -116,7 +113,7 @@ class Builder:
             for filename, data in templates.iteritems():
                 open(os.path.join(debian_dir, filename), 'w').write(data)
             
-        dch_cmd = subprocess.Popen(['dch', '-i', '** Snapshot commits'], cwd=self.workdir)
+        dch_cmd = subprocess.Popen(['dch', '--no-auto-nmu', '-i', '** latest commits'], cwd=self.workdir)
         dch_cmd.wait()
         
         for git_log in self.git.log():
