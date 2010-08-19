@@ -127,9 +127,8 @@ class Builder:
         self.project.save()
             
         dpkg_cmd = subprocess.Popen(
-                ['dpkg-buildpackage', '-rfakeroot', 
-                    '-k%s' % BrickConfig().get('gpg', 'keyid')],
-                cwd=self.workdir
+                'dpkg-buildpackage -rfakeroot -k%s' % BrickConfig().get('gpg', 'keyid'),
+                cwd=self.workdir, shell=True
             )
         
         dpkg_cmd.wait()

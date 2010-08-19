@@ -30,10 +30,11 @@ class Project(cyclone.web.RequestHandler):
                 builder = Builder(project.name)
                 builder.build_project(force=True)            
                 log.msg('Project build is done', project.name)
-                self.write(cyclone.escape.json_encode({'status': 'ok'}))
             except Exception, e:
                 log.err()
                 self.write(cyclone.escape.json_encode({'status': "fail"}))
+
+            self.write(cyclone.escape.json_encode({'status': 'ok'}))
         else:
             self.write(cyclone.escape.json_encode({'status':  "Project already exists"}))
 
