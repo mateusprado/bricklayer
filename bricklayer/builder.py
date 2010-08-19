@@ -55,15 +55,14 @@ class Builder:
                 
             self.project.save()
 
-            log.msg('Generating packages for %s on %s'  % (self.project, self.workdir))
-
             if build == 1:
+                log.msg('Generating packages for %s on %s'  % (self.project, self.workdir))
                 self.rpm()
                 self.deb()
                 self.upload_to()
+                log.msg("build complete")
 
             self.git.checkout('master') 
-            log.msg("build complete")
         
         except Exception, e:
             log.err()
@@ -126,10 +125,29 @@ class Builder:
         self.project.version = open(os.path.join(self.workdir, 'debian/changelog'), 'r').readline().split('(')[1].split(')')[0]
         self.project.save()
             
+        rvm_env = {}
+        rvm_rc = os.path.join(self.workdir, '.rvmrc')
+        if os.path.isfile(rvm_rc):
+            rvmexec = open(rvm_rc).read()
+            log.msg("RVMRC: %s" % rvmexec)
+
+            rvm_cmd = subprocess.Popen('/usr/local/bin/rvm info %s' % rvmexec.split()[1],
+                    shell=True, stdout=subprocess.PIPE)
+            rvm_cmd.wait()
+            for line in rvm_cmd.stdout.readlines():
+                if 'PATH' in line or 'HOME' in line:
+                    name, value = line.split()
+                    rvm_env[name.strip(':')] = value.strip('"')
+            rvm_env['HOME'] = os.environ['HOME']
+            log.msg(rvm_env)
+
+
         dpkg_cmd = subprocess.Popen(
-                'dpkg-buildpackage -rfakeroot -k%s' % BrickConfig().get('gpg', 'keyid'),
-                cwd=self.workdir, shell=True
+                ['dpkg-buildpackage',  '-k%s' % BrickConfig().get('gpg', 'keyid')],
+                cwd=self.workdir, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                env=rvm_env
             )
+        
         
         dpkg_cmd.wait()
 
