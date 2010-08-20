@@ -141,11 +141,12 @@ class Builder:
             rvm_env['HOME'] = os.environ['HOME']
             log.msg(rvm_env)
 
+        if len(rvm_env.keys()) < 1:
+            rvm_env = os.environ
 
         dpkg_cmd = subprocess.Popen(
-                ['dpkg-buildpackage',  '-k%s' % BrickConfig().get('gpg', 'keyid')],
-                cwd=self.workdir, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                env=rvm_env
+                ['dpkg-buildpackage',  '-rfakeroot', '-k%s' % BrickConfig().get('gpg', 'keyid')],
+                cwd=self.workdir, shell=True, env=rvm_env
             )
         
         
