@@ -127,7 +127,16 @@ class Builder:
             
         rvm_env = {}
         rvm_rc = os.path.join(self.workdir, '.rvmrc')
+        rvm_rc_example = rvm_rc +  "-example"
+        has_rvm = False
+
         if os.path.isfile(rvm_rc):
+            has_rvm = True
+        elif os.path.isfile(rvm_rc_example):
+            has_rvm = True
+            rvm_rc = rvm_rc_example
+        
+        if has_rvm:
             rvmexec = open(rvm_rc).read()
             log.msg("RVMRC: %s" % rvmexec)
 
