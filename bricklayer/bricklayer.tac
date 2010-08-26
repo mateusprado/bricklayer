@@ -1,6 +1,8 @@
-import sys, os, logging
-sys.path.append(os.path.join(os.path.dirname(__file__), 'utils'))
-sys.path.append(os.path.dirname(__file__))
+import sys
+import os
+import logging
+import bricklayer
+sys.path.append(os.path.dirname(bricklayer.__file__))
 
 import pystache
 
