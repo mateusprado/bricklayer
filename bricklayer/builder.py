@@ -116,7 +116,7 @@ class Builder:
             for filename, data in templates.iteritems():
                 open(os.path.join(debian_dir, filename), 'w').write(data)
 
-            os.chmod(os.path.join(debian_dir, 'rules'), stat.S_IRWXU|stat.S_IXGRP|stat.S_IXOTH)
+        
             
         dch_cmd = subprocess.Popen(['dch', '--no-auto-nmu', '-i', '** latest commits'], cwd=self.workdir)
         dch_cmd.wait()
@@ -157,6 +157,7 @@ class Builder:
             rvm_env = os.environ
 
 
+        os.chmod(os.path.join(debian_dir, 'rules'), stat.S_IRWXU|stat.S_IRWXG|stat.S_IROTH|stat.S_IXOTH)
         dpkg_cmd = subprocess.Popen(
                 ['dpkg-buildpackage',  '-rfakeroot', '-k%s' % BrickConfig().get('gpg', 'keyid')],
                 cwd=self.workdir, env=rvm_env, stdout=subprocess.PIPE, stderr=subprocess.PIPE
