@@ -25,6 +25,7 @@ class Builder:
             else:
                 build = 0
             
+            log.msg("Checking project: %s" % self.project.name)
             try:
                 if os.path.isdir(self.git.workdir):
                     self.git.pull()
