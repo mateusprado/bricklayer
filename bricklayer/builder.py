@@ -157,7 +157,7 @@ class Builder:
 
         dpkg_cmd = subprocess.Popen(
                 ['dpkg-buildpackage',  '-rfakeroot', '-k%s' % BrickConfig().get('gpg', 'keyid')],
-                cwd=self.workdir, shell=True, env=rvm_env, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                cwd=self.workdir, env=rvm_env, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
         
         dpkg_cmd.wait()
