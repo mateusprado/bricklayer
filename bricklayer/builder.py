@@ -116,7 +116,7 @@ class Builder:
             for filename, data in templates.iteritems():
                 open(os.path.join(debian_dir, filename), 'w').write(data)
 
-            os.chmod(os.path.join(debian_dir, 'rules'), 755)
+            os.chmod(os.path.join(debian_dir, 'rules'), stat.S_IRWXU|stat.S_IXGRP|stat.S_IXOTH)
             
         dch_cmd = subprocess.Popen(['dch', '--no-auto-nmu', '-i', '** latest commits'], cwd=self.workdir)
         dch_cmd.wait()
