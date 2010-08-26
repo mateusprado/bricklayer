@@ -17,6 +17,7 @@ class Builder:
         self.project = Projects.get(project)
         self.workdir = os.path.join(self.workspace, self.project.name) 
         self.git = git.Git(self.project)
+        self.project_log = open('%s/%s.log' % (self.workdir, self.project.name), 'a')
 
     def build_project(self, force=False):
         try:
@@ -153,11 +154,11 @@ class Builder:
         if len(rvm_env.keys()) < 1:
             rvm_env = os.environ
 
+
         dpkg_cmd = subprocess.Popen(
                 ['dpkg-buildpackage',  '-rfakeroot', '-k%s' % BrickConfig().get('gpg', 'keyid')],
-                cwd=self.workdir, shell=True, env=rvm_env
-            )
-        
+                cwd=self.workdir, shell=True, env=rvm_env, stdout=self.project_log
+        )
         
         dpkg_cmd.wait()
 
@@ -166,7 +167,7 @@ class Builder:
 
     def upload_to(self):
         changes_file = glob.glob('%s/%s_%s_*.changes' % (self.workspace,self.project.name,self.project.version))[0]
-        upload_cmd = subprocess.Popen(['dput',  changes_file])
+        upload_cmd = subprocess.Popen(['dput',  changes_file], stdout=self.project_log)
         upload_cmd.wait()
 
     def promote_to(self, release):

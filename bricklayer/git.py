@@ -20,6 +20,8 @@ class Git(object):
         if tag != None:
             if tag.startswith('hudson'):
                 return int(tag.split('-')[-1])
+            else:
+                return tag
 
     def clone(self):
         logging.debug("Git clone")
