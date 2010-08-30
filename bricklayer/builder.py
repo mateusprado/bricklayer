@@ -163,6 +163,10 @@ class Builder:
 
         if len(rvm_env.keys()) < 1:
             rvm_env = os.environ
+        else:
+            os.environ.pop('GEM_HOME')
+            os.environ.pop('BUNDLER_HOME')
+            rvm_env.update(os.environ)
 
 
         os.chmod(os.path.join(debian_dir, 'rules'), stat.S_IRWXU|stat.S_IRWXG|stat.S_IROTH|stat.S_IXOTH)
