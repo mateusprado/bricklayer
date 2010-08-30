@@ -1,13 +1,15 @@
 import sys
 import os
 import logging
+sys.path.append('.')
+
 import bricklayer
 sys.path.append(os.path.dirname(bricklayer.__file__))
 
 import pystache
 
 from twisted.application import internet, service
-from twisted.internet import defer, protocol, task
+from twisted.internet import protocol, task, threads
 from twisted.protocols import basic
 
 from builder import Builder
@@ -26,7 +28,8 @@ class BricklayerProtocol(basic.LineReceiver):
         command, arg = line.split(':')
         if 'build' in command:
             project_name = arg
-            defered = self.factory.buildProject(project_name, force=True)
+            self.transport.write("building %s\r\n" % project_name)
+            defered = threads.deferToThread(self.factory.buildProject, project_name, force=True)
             defered.addCallback(onResponse, onError)
     
     def connectionMade(self):
@@ -37,18 +40,19 @@ class BricklayerFactory(protocol.ServerFactory):
     
     def __init__(self):
         self.projects = Projects.get_all()
-        self.taskProjects = {}
         self.schedProjects()
 
     def buildProject(self, project_name, force=False):
         builder = Builder(project_name)
-        return defer.succeed(builder.build_project(force=force))
+        builder.build_project(force=force)
+    
+    def schedBuilder(self):
+        for project in self.projects:
+            d = threads.deferToThread(self.buildProject, project.name)
 
     def schedProjects(self):
-        for project in self.projects:
-            projectBuilder = Builder(project.name)
-            self.taskProjects[project.name] = task.LoopingCall(projectBuilder.build_project)
-            self.taskProjects[project.name].start(300.0)
+        sched_task = task.LoopingCall(self.schedBuilder)
+        sched_task.start(300.0)
 
 if "BRICKLAYERCONFIG" in os.environ.keys():
     configfile = os.environ['BRICKLAYERCONFIG']

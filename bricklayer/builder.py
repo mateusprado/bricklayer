@@ -18,6 +18,12 @@ class Builder:
         self.project = Projects.get(project)
         self.workdir = os.path.join(self.workspace, self.project.name) 
         self.git = git.Git(self.project)
+        self.stdout = open(self.workspace + '/%s.log' % self.project.name, 'a+')
+        self.stderr = self.stdout
+
+    def _exec(self, cmd, *args, **kwargs):
+        kwargs.update({'stdout': self.stdout, 'stderr': self.stderr})
+        return subprocess.Popen(cmd, *args, **kwargs)
 
     def build_project(self, force=False):
         try:
@@ -119,11 +125,11 @@ class Builder:
 
         
             
-        dch_cmd = subprocess.Popen(['dch', '--no-auto-nmu', '-i', '** latest commits'], cwd=self.workdir)
+        dch_cmd = self._exec(['dch', '--no-auto-nmu', '-i', '** latest commits'], cwd=self.workdir)
         dch_cmd.wait()
         
         for git_log in self.git.log():
-            append_log = subprocess.Popen(['dch', '-a', git_log], cwd=self.workdir)
+            append_log = self._exec(['dch', '-a', git_log], cwd=self.workdir)
             append_log.wait()
         
         self.project.version = open(os.path.join(self.workdir, 'debian/changelog'), 'r').readline().split('(')[1].split(')')[0]
@@ -143,7 +149,8 @@ class Builder:
         if has_rvm:
             rvmexec = open(rvm_rc).read()
             log.msg("RVMRC: %s" % rvmexec)
-
+            
+            # I need the output not to log on file
             rvm_cmd = subprocess.Popen('/usr/local/bin/rvm info %s' % rvmexec.split()[1],
                     shell=True, stdout=subprocess.PIPE)
             rvm_cmd.wait()
@@ -159,28 +166,24 @@ class Builder:
 
 
         os.chmod(os.path.join(debian_dir, 'rules'), stat.S_IRWXU|stat.S_IRWXG|stat.S_IROTH|stat.S_IXOTH)
-        dpkg_cmd = subprocess.Popen(
+        dpkg_cmd = self._exec(
                 ['dpkg-buildpackage',  '-rfakeroot', '-k%s' % BrickConfig().get('gpg', 'keyid')],
-                cwd=self.workdir, env=rvm_env, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                cwd=self.workdir, env=rvm_env
         )
         
         dpkg_cmd.wait()
-        log.msg(dpkg_cmd.stdout.read())
-        log.msg(dpkg_cmd.stderr.read())
 
-        clean_cmd = subprocess.Popen(['dh', 'clean'], cwd=self.workdir)
+        clean_cmd = self._exec(['dh', 'clean'], cwd=self.workdir)
         clean_cmd.wait()
 
     def upload_to(self):
         changes_file = glob.glob('%s/%s_%s_*.changes' % (self.workspace,self.project.name,self.project.version))[0]
-        upload_cmd = subprocess.Popen(['dput',  changes_file], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        upload_cmd = self._exec(['dput',  changes_file])
         upload_cmd.wait()
-        log.msg(upload_cmd.stdout.read())
-        log.msg(upload_cmd.stderr.read())
 
     def promote_to(self, release):
         self.project.release = release
         self.project.save()
         self.git.create_tag("%s/%s" % (release, self.project.version))
-        dch_cmd = subprocess.Popen(['dch', '-r', '--no-force-save-on-release', '-d', release], cwd=self.workdir)
+        dch_cmd = self._exec(['dch', '-r', '--no-force-save-on-release', '-d', release], cwd=self.workdir)
         dch_cmd.wait()

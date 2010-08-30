@@ -8,11 +8,10 @@ from builder import Builder
 
 import cyclone.web
 import cyclone.escape
-from twisted.internet import defer
+from twisted.internet import reactor
 from twisted.python import log
 
 class Project(cyclone.web.RequestHandler):
-    
     def post(self):
         try:
             Projects().get(self.get_argument('name'))
@@ -28,8 +27,7 @@ class Project(cyclone.web.RequestHandler):
                 project.save()
                 log.msg('Project created:', project.name)
                 builder = Builder(project.name)
-                builder.build_project(force=True)            
-                log.msg('Project build is done', project.name)
+                reactor.callLater(1, builder.build_project, force=True)
             except Exception, e:
                 log.err()
                 self.write(cyclone.escape.json_encode({'status': "fail"}))
@@ -43,15 +41,14 @@ class Project(cyclone.web.RequestHandler):
         builder = Builder(project.name)
         for name, arg in self.request.arguments.iteritems():
             setattr(project, name, arg[0])
-
         try:
             project.save()
-            builder.build_project(force=True)
-            self.write(cyclone.escape.json_encode({'status': 'ok'}))
+            self.finish(cyclone.escape.json_encode({'status': 'build scheduled'}))
         except Exception, e:
             log.err(e)
-            self.write(cyclone.escape.json_encode({'status': 'fail'}))
-
+            self.finish(cyclone.escape.json_encode({'status': 'fail'}))
+        reactor.callLater(1, builder.build_project, force=True)
+    
     def get(self, name):
         try:
             project = Projects().get(name)
