@@ -11,6 +11,7 @@ import pystache
 from twisted.application import internet, service
 from twisted.internet import protocol, task, threads
 from twisted.protocols import basic
+from twisted.python import log
 
 from builder import Builder
 from projects import Projects
@@ -39,7 +40,6 @@ class BricklayerFactory(protocol.ServerFactory):
     protocol = BricklayerProtocol
     
     def __init__(self):
-        self.projects = Projects.get_all()
         self.schedProjects()
 
     def buildProject(self, project_name, force=False):
@@ -47,12 +47,12 @@ class BricklayerFactory(protocol.ServerFactory):
         builder.build_project(force=force)
     
     def schedBuilder(self):
-        for project in self.projects:
+        for project in Projects.get_all():
             d = threads.deferToThread(self.buildProject, project.name)
 
     def schedProjects(self):
         sched_task = task.LoopingCall(self.schedBuilder)
-        sched_task.start(300.0)
+        sched_task.start(200.0)
 
 if "BRICKLAYERCONFIG" in os.environ.keys():
     configfile = os.environ['BRICKLAYERCONFIG']

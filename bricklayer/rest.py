@@ -26,8 +26,7 @@ class Project(cyclone.web.RequestHandler):
             try:
                 project.save()
                 log.msg('Project created:', project.name)
-                builder = Builder(project.name)
-                reactor.callLater(1, builder.build_project, force=True)
+                reactor.callInThread(self.forceBuild, project.name)
             except Exception, e:
                 log.err()
                 self.write(cyclone.escape.json_encode({'status': "fail"}))
@@ -38,7 +37,6 @@ class Project(cyclone.web.RequestHandler):
 
     def put(self, name):
         project = Projects().get(name)
-        builder = Builder(project.name)
         for name, arg in self.request.arguments.iteritems():
             setattr(project, name, arg[0])
         try:
@@ -47,7 +45,7 @@ class Project(cyclone.web.RequestHandler):
         except Exception, e:
             log.err(e)
             self.finish(cyclone.escape.json_encode({'status': 'fail'}))
-        reactor.callLater(1, builder.build_project, force=True)
+        reactor.callInThread(self.forceBuild, project.name)
     
     def get(self, name):
         try:
@@ -67,6 +65,10 @@ class Project(cyclone.web.RequestHandler):
             project.delete()
         except Exception, e:
             log.err(e)
+
+    def forceBuild(self, project_name):
+        builder = Builder(project_name)
+        builder.build_project(force=True)
 
 restApp = cyclone.web.Application([
     (r'/project/(.*)', Project),
