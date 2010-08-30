@@ -164,8 +164,11 @@ class Builder:
         if len(rvm_env.keys()) < 1:
             rvm_env = os.environ
         else:
-            os.environ.pop('GEM_HOME')
-            os.environ.pop('BUNDLER_HOME')
+            try:
+                os.environ.pop('GEM_HOME')
+                os.environ.pop('BUNDLER_PATH')
+            except Exception, e:
+                pass
             rvm_env.update(os.environ)
 
 
