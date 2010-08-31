@@ -12,7 +12,7 @@ from twisted.internet import reactor
 from twisted.python import log
 
 class Project(cyclone.web.RequestHandler):
-    def post(self):
+    def post(self, *args):
         try:
             Projects().get(self.get_argument('name'))
         except Exception, e:
@@ -71,7 +71,7 @@ class Project(cyclone.web.RequestHandler):
         builder.build_project(force=True)
 
 restApp = cyclone.web.Application([
-    (r'/project/(.*)', Project),
     (r'/project', Project),
+    (r'/project/(.*)', Project),
 ])
 
