@@ -15,4 +15,17 @@ Bricklayer has a restful interface that accepts the following parameters:
     POST /project -> params:
         name="bricklayer" # The project name
         version="1.0-1"   # Initial version (will be incremented by each git commit or hudson git tag)
-        git_url="git://host/project/repository.git" # 
+        git_url="git://host/project/repository.git" # Repository URL to watch
+        build_cmd="make"  # Command within your project that generate binaries or prepare your project to be installed 
+        install_cmd="make install PREFIX=debian/tmp" # A command within your project that install the generated binaries
+
+    GET /project/name:
+        Return the attributes of the project in JSON format
+
+* Building ruby applications ?
+
+Bricklayer uses RVM to handle multimo ruby projects to be built in the same machine, to use rvm you must provide a .rvmrc or .rvmrc.example (if you don't want a .rvmrc hanging on your project repository) using the rvmrc syntax as usual. It is highly recommended that you use this if you are building multiples projects using different ruby versions.
+
+* What else ?
+
+To come ...
