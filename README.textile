@@ -11,16 +11,16 @@ Bricklayer uses twisted to serve a restful interface as well as the scheduler in
 h2. Installation
 
 Bricklayer has a debian directory ready to be built, to do so under a debian-based system run:
-<code>
+<pre>
   apt-get install build-scripts
   dpkg-buildpackage -rfakeroot # (inside the project directory)
   dpkg -i ../bricklayer*.deb # were * is your architecture and version
-</code>
+</pre>
 
 h2. Usage
 
 Bricklayer has a restful interface that accepts the following parameters:
-<code>
+<pre>
   POST /project -> params:
           name="bricklayer" # The project name
           version="1.0-1"   # Initial version (will be incremented by each git commit or hudson git tag)
@@ -30,7 +30,7 @@ Bricklayer has a restful interface that accepts the following parameters:
 
   GET /project/name:
       Return the attributes of the project in JSON format
-</code>
+</pre>
 
 h2. Building ruby applications ?
 
