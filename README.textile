@@ -12,24 +12,24 @@ h2. Installation
 
 Bricklayer has a debian directory ready to be built, to do so under a debian-based system run:
 <pre>
-  apt-get install build-scripts
-  dpkg-buildpackage -rfakeroot # (inside the project directory)
-  dpkg -i ../bricklayer*.deb # were * is your architecture and version
+apt-get install build-scripts
+dpkg-buildpackage -rfakeroot # (inside the project directory)
+dpkg -i ../bricklayer*.deb # were * is your architecture and version
 </pre>
 
 h2. Usage
 
 Bricklayer has a restful interface that accepts the following parameters:
 <pre>
-  POST /project -> params:
-          name="bricklayer" # The project name
-          version="1.0-1"   # Initial version (will be incremented by each git commit or hudson git tag)
-          git_url="git://host/project/repository.git" # Repository URL to watch
-          build_cmd="make"  # Command within your project that generate binaries or prepare your project to be installed 
-          install_cmd="make install PREFIX=debian/tmp" # A command within your project that install the generated binaries
+POST /project -> params:
+        name="bricklayer" # The project name
+        version="1.0-1"   # Initial version (will be incremented by each git commit or hudson git tag)
+        git_url="git://host/project/repository.git" # Repository URL to watch
+        build_cmd="make"  # Command within your project that generate binaries or prepare your project to be installed
+        install_cmd="make install PREFIX=debian/tmp" # A command within your project that install the generated binaries
 
-  GET /project/name:
-      Return the attributes of the project in JSON format
+GET /project/name:
+  Return the attributes of the project in JSON format
 </pre>
 
 h2. Building ruby applications ?
