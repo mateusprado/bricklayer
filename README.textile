@@ -6,35 +6,31 @@ h2. Requirements
 
 Bricklayer uses twisted to serve a restful interface as well as the scheduler interface, it also needs sqlalchemy to save projects in a sqlite database (works with any other database supported by sqlalchemy) but sqlalchemy is included in the project so to install bricklayer dependencies on a debian systems just shot the following in your shell:
     
-<pre><code>$ apt-get install python-twisted</code></pre>
+<pre><code>apt-get install python-twisted</code></pre>
 
 h2. Installation
 
 Bricklayer has a debian directory ready to be built, to do so under a debian-based system run:
-<pre>
-  <code>
-    $ apt-get install build-scripts
-    $ dpkg-buildpackage -rfakeroot # (inside the project directory)
-    $ dpkg -i ../bricklayer*.deb # were * is your architecture and version
-  </code>
-</pre>
+<code>
+  apt-get install build-scripts
+  dpkg-buildpackage -rfakeroot # (inside the project directory)
+  dpkg -i ../bricklayer*.deb # were * is your architecture and version
+</code>
 
 h2. Usage
 
 Bricklayer has a restful interface that accepts the following parameters:
-<pre>
-  <code>
-    POST /project -> params:
-        name="bricklayer" # The project name
-        version="1.0-1"   # Initial version (will be incremented by each git commit or hudson git tag)
-        git_url="git://host/project/repository.git" # Repository URL to watch
-        build_cmd="make"  # Command within your project that generate binaries or prepare your project to be installed 
-        install_cmd="make install PREFIX=debian/tmp" # A command within your project that install the generated binaries
+<code>
+  POST /project -> params:
+          name="bricklayer" # The project name
+          version="1.0-1"   # Initial version (will be incremented by each git commit or hudson git tag)
+          git_url="git://host/project/repository.git" # Repository URL to watch
+          build_cmd="make"  # Command within your project that generate binaries or prepare your project to be installed 
+          install_cmd="make install PREFIX=debian/tmp" # A command within your project that install the generated binaries
 
-    GET /project/name:
-        Return the attributes of the project in JSON format
-  </code>
-</pre>
+  GET /project/name:
+      Return the attributes of the project in JSON format
+</code>
 
 h2. Building ruby applications ?
 
