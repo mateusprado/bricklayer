@@ -1,4 +1,6 @@
-import os, subprocess, logging
+import os 
+import subprocess
+from twisted.python import log
 from config import BrickConfig
 
 class Git(object):
@@ -24,7 +26,7 @@ class Git(object):
                 return tag
 
     def clone(self):
-        logging.debug("Git clone")
+        log.msg("Git clone")
         git_cmd = self._exec_git(['git', 'clone', self.project.git_url, self.workdir])
         git_cmd.wait()
     
@@ -43,8 +45,10 @@ class Git(object):
         try:
             tagdir = os.path.join(self.workdir, '.git', 'refs', 'tags')
             tags = os.listdir(tagdir)
-            return sorted(tags, key=_sort_tags)
+            return sorted(tags, key=self._sort_tags)
         except Exception, e:
+            log.err(repr(e))
+            log.err()
             return []
 
     def create_tag(self, tag=''):
