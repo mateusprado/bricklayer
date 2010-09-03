@@ -49,7 +49,6 @@ class Builder:
             tags = self.git.tags()
 
             last_commit = self.git.last_commit()
-            log.msg("%s tags: %s" % (self.project.name, tags))
             if len(tags) > 0:
                 log.msg('Last tag found: %s' % tags[-1])
                 if self.project.last_tag != tags[-1]:
