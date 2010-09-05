@@ -1,5 +1,6 @@
 import os 
 import subprocess
+import re
 from twisted.python import log
 from config import BrickConfig
 
