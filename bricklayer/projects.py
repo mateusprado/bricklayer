@@ -91,7 +91,11 @@ class Projects(Base):
         Session().get().add(self)
         Session().get().commit()
     
-
+    @synchronized(_session_lock)
+    def delete(self):
+        Session().get().delete(self)
+        Session().get().commit()
+    
 if __name__ == '__main__':
     projects_db = Projects()
     projects_db.metadata.create_all(Session.get_engine())
