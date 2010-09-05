@@ -20,10 +20,9 @@ class Git(object):
 
     def _sort_tags(self, tag):
         if tag != None:
-            if tag.startswith('hudson'):
-                return int(tag.split('-')[-1])
-            else:
-                return tag
+            match = re.match(".*?[-/]([0-9.]+)", tag)
+            if match:
+                return match.group(1)
 
     def clone(self):
         log.msg("Git clone")
