@@ -21,7 +21,7 @@ class Git(object):
 
     def _sort_tags(self, tag):
         if tag != None:
-            match = re.match(".*?[-/]([0-9.]+)", tag)
+            match = re.match(".*?[-/](\d+)", tag)
             if match:
                 return match.group(1)
 
