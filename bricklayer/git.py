@@ -23,7 +23,10 @@ class Git(object):
         if tag != None:
             match = re.match(".*?[-/]([0-9.]+)", tag)
             if match:
-                return int(match.group(1))
+                if '.' in match.group(1):
+                    return match.group(1)
+                else:
+                    return int(match.group(1))
 
     def clone(self):
         log.msg("Git clone")
