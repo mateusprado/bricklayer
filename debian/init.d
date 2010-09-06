@@ -12,7 +12,7 @@ test -r $file || exit 0
 case "$1" in
     start)
         echo -n "Starting bricklayer: twistd"
-        start-stop-daemon --start --quiet --exec /usr/bin/twistd --pidfile=$pidfile --rundir=$rundir --python=$file --logfile=$logfile
+        start-stop-daemon --start --quiet --exec /usr/bin/twistd -- --pidfile=$pidfile --rundir=$rundir --python=$file --logfile=$logfile
         echo "."	
     ;;
 
