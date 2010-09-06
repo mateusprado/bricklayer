@@ -8,19 +8,17 @@ pidfile=/var/run/bricklayer.pid rundir=/var/lib/bricklayer/ file=/etc/bricklayer
 
 test -x /usr/bin/twistd || exit 0
 test -r $file || exit 0
-test -r /usr/share/bricklayer/package-installed || exit 0
-
 
 case "$1" in
     start)
         echo -n "Starting bricklayer: twistd"
-        start-stop-daemon --start --quiet --exec /usr/bin/twistd --                           --pidfile=$pidfile                           --rundir=$rundir                           --python=$file                           --logfile=$logfile
+        start-stop-daemon --start --quiet --exec /usr/bin/twistd --pidfile=$pidfile --rundir=$rundir --python=$file --logfile=$logfile
         echo "."	
     ;;
 
     stop)
         echo -n "Stopping bricklayer: twistd"
-        start-stop-daemon --stop --quiet              --pidfile $pidfile
+        start-stop-daemon --stop --quiet --pidfile $pidfile
         echo "."	
     ;;
 
