@@ -14,6 +14,7 @@ Bricklayer has a debian directory ready to be built, to do so under a debian-bas
 
 <pre>
 apt-get -y install build-essential devscripts cdbs python-twisted python-setuptools
+easy_install pystache sqlalchemy cyclone simplejson
 dpkg-buildpackage -rfakeroot # (inside the project directory)
 dpkg -i ../bricklayer*.deb # were * is your architecture and version
 </pre>
