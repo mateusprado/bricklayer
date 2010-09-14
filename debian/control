@@ -10,4 +10,4 @@ Package: bricklayer
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: Builds packages based on git tags or commits
- Bricklayer is an twisted application which watch your repository and build debian packages for any changes in tags or commits
+ Bricklayer is a twisted application which watches your repository and builds debian packages for any change in tags or commits
