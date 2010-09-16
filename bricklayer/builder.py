@@ -259,7 +259,6 @@ class Builder:
                 pass
             rvm_env.update(os.environ)
 
-
         os.chmod(os.path.join(debian_dir, 'rules'), stat.S_IRWXU|stat.S_IRWXG|stat.S_IROTH|stat.S_IXOTH)
         dpkg_cmd = self._exec(
                 ['dpkg-buildpackage',  '-rfakeroot', '-k%s' % BrickConfig().get('gpg', 'keyid')],
