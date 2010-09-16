@@ -77,8 +77,9 @@ class Builder:
             log.err("build failed: %s" % repr(e))
 
     def rpm(self):
+        filename = os.path.join(rpm_dir, "%s.spec" % self.project.name)
         build_dir = os.path.join(self.workdir, 'rpm', 'build')
-	templates_dir = os.path.join(self.templates_dir, 'rpm')
+        templates_dir = os.path.join(self.templates_dir, 'rpm')
         rpm_dir = os.path.join(self.workdir, 'rpm')
 
         if self.project.install_prefix is None:
@@ -102,6 +103,73 @@ class Builder:
                 'email': self.project.email,
                 'date': time.strftime("%a %h %d %Y"),
             }
+
+        if not os.path.isdir(rpm_dir):
+
+            template_fd = open(os.path.join(templates_dir, 'project.spec'))
+            rendered_template = open(filename, 'w+')
+            rendered_template.write(pystache.template.Template(template_fd.read()).render(context=template_data))
+            template_fd.close()
+            rendered_template.close()
+            
+            os.makedirs(
+                    os.path.join(
+                        rpm_dir, self.project.name, self.project.install_prefix
+                        )
+                    )
+
+        rendered_template = open(os.path.join(rpm_dir, filename), 'a+')
+        rendered_template.write("* %(date)s %(username)s <%(email)s> - %(version)s" % template_data)
+            
+        for git_log in self.git.log():
+            rendered_template.write('- %s' % git_log)
+        rendered_template.close()
+        
+        self.project.release = "%s" % (int(self.project.release) + 1)
+        self.project.save()
+            
+        rvm_env = {}
+        rvm_rc = os.path.join(self.workdir, '.rvmrc')
+        rvm_rc_example = rvm_rc +  ".example"
+        has_rvm = False
+
+        if os.path.isfile(rvm_rc):
+            has_rvm = True
+        elif os.path.isfile(rvm_rc_example):
+            has_rvm = True
+            rvm_rc = rvm_rc_example
+        
+        if has_rvm:
+            rvmexec = open(rvm_rc).read()
+            log.msg("RVMRC: %s" % rvmexec)
+            
+            # I need the output not to log on file
+            rvm_cmd = subprocess.Popen('/usr/local/bin/rvm info %s' % rvmexec.split()[1],
+                    shell=True, stdout=subprocess.PIPE)
+            rvm_cmd.wait()
+            for line in rvm_cmd.stdout.readlines():
+                if 'PATH' in line or 'HOME' in line:
+                    name, value = line.split()
+                    rvm_env[name.strip(':')] = value.strip('"')
+            rvm_env['HOME'] = os.environ['HOME']
+            log.msg(rvm_env)
+
+        if len(rvm_env.keys()) < 1:
+            rvm_env = os.environ
+        else:
+            try:
+                os.environ.pop('GEM_HOME')
+                os.environ.pop('BUNDLER_PATH')
+            except Exception, e:
+                pass
+            rvm_env.update(os.environ)
+
+        rpm_cmd = self._exec(
+                ['rpmbuild', '-ba', '--sign', filename],
+                cwd=self.workdir, env=rvm_env
+        )
+        
+        rpm_cmd.wait()
 
     def deb(self):
         templates = {}
@@ -144,8 +212,6 @@ class Builder:
 
             for filename, data in templates.iteritems():
                 open(os.path.join(debian_dir, filename), 'w').write(data)
-
-        
             
         dch_cmd = self._exec(['dch', '--no-auto-nmu', '-i', '** latest commits'], cwd=self.workdir)
         dch_cmd.wait()

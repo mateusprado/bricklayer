@@ -46,5 +46,3 @@ rm -rf %{buildroot}
 #%doc {{ doc_dir }}/*
 
 %changelog
-* {{ date }} {{ username }} <{{ email }}> - {{ version }}
-{{ commit_messages }}
