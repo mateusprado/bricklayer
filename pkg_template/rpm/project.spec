@@ -1,9 +1,9 @@
 # Basic Information
 Name: 		{{ name }} 	
 Version: 	{{ version }}	
-Release:	1%{?dist}
+Release:	{{ release }}
 Summary:	{{ description }}
-Group:	
+Group:		Locaweb
 License:	Internal	
 URL:		{{ git_url }}
 
@@ -11,15 +11,15 @@ URL:		{{ git_url }}
 Packager: Bricklayer Builder <bricklayer@locaweb.com.br>
 
 # Build Information
-BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+BuildRoot:	{{ build_dir }}
 
 # Source Information
-Source0:	
-Patch0:
+#Source0:
+#Patch0:
 
 # Dependency Information
-BuildRequires:	gcc binutils
-Requires:
+BuildRequires:	{{ build_packages }}
+Requires: {{ required_packages }}
 
 %description
 
@@ -27,26 +27,24 @@ Requires:
 %setup -q
 
 %build
-%configure
-make %{?_smp_mflags}
+{{ build_cmd }}
 
 %install
-# make install DESTDIR=%{buildroot}
 {{ install_cmd }}
 
 %clean
 rm -rf %{buildroot}
 
-%post
-/sbin/ldconfig
+#%post
+#/sbin/ldconfig
 
-%postun
-/sbin/ldconfig
+#%postun
+#/sbin/ldconfig
 
 %files
 %defattr(-,root,root,-)
-%doc
+#%doc {{ doc_dir }}/*
 
 %changelog
-* Sat Aug 29 2009 Robert Xu <robxu9@gmail.com> 7.6
-- Initial Spec File
+* {{ date }} {{ username }} <{{ email }}> - {{ version }}
+{{ commit_messages }}
