@@ -17,6 +17,7 @@ class Builder:
         self.workspace = BrickConfig().get('workspace', 'dir')
         self.project = Projects.get(project)
         self.workdir = os.path.join(self.workspace, self.project.name) 
+        self.templates_dir = BrickConfig().get('workspace', 'template_dir')
         self.git = git.Git(self.project)
         self.stdout = open(self.workspace + '/%s.log' % self.project.name, 'a+')
         self.stderr = self.stdout
@@ -76,19 +77,43 @@ class Builder:
             log.err("build failed: %s" % repr(e))
 
     def rpm(self):
-        pass
+        build_dir = os.path.join(self.workdir, 'rpm', 'build')
+	templates_dir = os.path.join(self.templates_dir, 'rpm')
+        rpm_dir = os.path.join(self.workdir, 'rpm')
+
+        if self.project.install_prefix is None:
+            self.project.install_prefix = 'opt'
+
+        if not self.project.install_cmd :
+
+            self.project.install_cmd = 'cp -r \`ls | grep -Ev "debian|rpm"\` %s/%s/%s' % (
+                    self.build_dir,
+                    self.project.install_prefix,
+                    self.project.name
+                )
+
+        template_data = {
+                'name': self.project.name,
+                'version': "%s" % (self.project.version),
+                'build_dir': build_dir,
+                'build_cmd': self.project.build_cmd,
+                'install_cmd': self.project.install_cmd,
+                'username': self.project.username,
+                'email': self.project.email,
+                'date': time.strftime("%a %h %d %Y"),
+            }
 
     def deb(self):
         templates = {}
-        templates_dir = os.path.join(BrickConfig().get('workspace', 'template_dir'), 'deb')
+	templates_dir = os.path.join(self.templates_dir, 'deb')
+        debian_dir = os.path.join(self.workdir, 'debian')
         
         if self.project.install_prefix is None:
             self.project.install_prefix = 'opt'
 
         if not self.project.install_cmd :
 
-            self.project.install_cmd = 'cp -r \`ls | grep -v debian\` debian/%s/%s' % (
-                    self.project.name, 
+            self.project.install_cmd = 'cp -r \`ls | grep -v debian\` debian/tmp/%s' % (
                     self.project.install_prefix
                 )
 
@@ -101,8 +126,6 @@ class Builder:
                 'email': self.project.email,
                 'date': time.strftime("%a, %d %h %Y %T %z"),
             }
-
-        debian_dir = os.path.join(self.workdir, 'debian')
 
         def read_file_data(f):
             template_fd = open(os.path.join(templates_dir, f))
