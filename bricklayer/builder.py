@@ -165,7 +165,7 @@ class Builder:
             rvm_env.update(os.environ)
 
         rpm_cmd = self._exec(
-                ['rpmbuild', '-ba', '--sign', filename],
+                ['rpmbuild', '-ba', filename],
                 cwd=self.workdir, env=rvm_env
         )
         
