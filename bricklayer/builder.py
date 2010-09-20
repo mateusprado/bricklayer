@@ -1,15 +1,17 @@
+import sys
 import os
 import stat
-import pystache
 import subprocess
 import time
 import glob
 import ConfigParser
 
+sys.path.append(os.path.join(os.path.dirname(__file__), 'utils'))
+
+import pystache
 import git
 from config import BrickConfig
 from projects import Projects
-
 from twisted.python import log
 
 class Builder:

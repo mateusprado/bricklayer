@@ -5,6 +5,7 @@ sys.path.append('.')
 
 import bricklayer
 sys.path.append(os.path.dirname(bricklayer.__file__))
+sys.path.append(os.path.join(os.path.dirname(bricklayer.__file__), 'utils'))
 
 import pystache
 
