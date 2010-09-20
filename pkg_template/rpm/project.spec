@@ -1,8 +1,10 @@
+%define _topdir {{ top_dir }}
+
 # Basic Information
 Name: {{ name }} 	
 Version: {{ version }}	
 Release: {{ release }}
-Summary: {{ description }}
+Summary: {{ name }} Locaweb project
 Group: Locaweb
 License: Internal	
 URL: {{ git_url }}
@@ -14,14 +16,15 @@ Packager: Bricklayer Builder <bricklayer@locaweb.com.br>
 BuildRoot: {{ build_dir }}
 
 # Source Information
-#Source0:
+Source0: {{ source }}
 #Patch0:
 
 # Dependency Information
-BuildRequires: {{ build_packages }}
-Requires: {{ required_packages }}
+#BuildRequires: {{ build_packages }}
+#Requires: {{ required_packages }}
 
 %description
+{{ name }} Locaweb project
 
 %prep
 %setup -q
@@ -34,6 +37,7 @@ Requires: {{ required_packages }}
 
 %clean
 rm -rf %{buildroot}
+rm -rf %{_builddir}/%{name}-%{version}
 
 #%post
 #/sbin/ldconfig
@@ -43,5 +47,6 @@ rm -rf %{buildroot}
 
 %files
 %defattr(-,root,root,-)
+/*
 
 %changelog

@@ -5,6 +5,8 @@ import subprocess
 import time
 import glob
 import ConfigParser
+import tarfile
+import shutil
 
 sys.path.append(os.path.join(os.path.dirname(__file__), 'utils'))
 
@@ -21,6 +23,20 @@ class Builder:
         self.workdir = os.path.join(self.workspace, self.project.name) 
         self.templates_dir = BrickConfig().get('workspace', 'template_dir')
         self.git = git.Git(self.project)
+        self.build_system = BrickConfig().get('build', 'system')
+        
+        if self.build_system == 'rpm':
+            self.mod_install_cmd = self.project.install_cmd.replace(
+                'BUILDROOT', '%{buildroot}'
+            )
+        elif self.build_system == 'deb':
+            self.mod_install_cmd = self.project.install_cmd.replace(
+                'BUILDROOT', 'debian/tmp'
+            )
+        
+        if not os.path.isdir(self.workspace):
+            os.makedirs(self.workspace)
+        
         self.stdout = open(self.workspace + '/%s.log' % self.project.name, 'a+')
         self.stderr = self.stdout
 
@@ -67,9 +83,11 @@ class Builder:
 
             if build == 1:
                 log.msg('Generating packages for %s on %s'  % (self.project, self.workdir))
-                self.rpm()
-                self.deb()
-                self.upload_to()
+                if self.build_system == 'rpm':
+                    self.rpm()
+                elif self.build_system == 'deb':
+                    self.deb()
+                    self.upload_to()
                 log.msg("build complete")
 
             self.git.checkout('master') 
@@ -79,10 +97,31 @@ class Builder:
             log.err("build failed: %s" % repr(e))
 
     def rpm(self):
-        filename = os.path.join(rpm_dir, "%s.spec" % self.project.name)
-        build_dir = os.path.join(self.workdir, 'rpm', 'build')
+        file_prefix = '%s-%s' % (self.project.name, self.project.version)
+        rpm_dir = os.path.join(self.workspace, 'rpm')
+        filename = os.path.join(rpm_dir, 'SPECS', "%s.spec" % self.project.name)
+
+        for dir in ('SOURCES', 'SPECS', 'RPMS', 'SRPMS', 'BUILD', 'TMP'):
+            if not os.path.isdir(os.path.join(rpm_dir, dir)):
+                os.makedirs(os.path.join(rpm_dir, dir))
+        
+        build_dir = os.path.join(self.workspace, 'rpm', 'TMP')
+        source_dir = os.path.join(rpm_dir, 'SOURCES')
+        source_file = os.path.join(source_dir, '%s.tar.gz' % file_prefix)
+        tar = tarfile.open(source_file, 'w:gz')
+
+        shutil.copytree(self.workdir, '/tmp/%s' % file_prefix)
+        
+        cur_dir = os.path.abspath(os.curdir)
+        os.chdir('/tmp/')
+        tar.add(file_prefix)
+        tar.close()
+        shutil.rmtree(file_prefix)
+        os.chdir(cur_dir)
+
         templates_dir = os.path.join(self.templates_dir, 'rpm')
-        rpm_dir = os.path.join(self.workdir, 'rpm')
+        if self.project.release is None:
+            self.project.release = 1
 
         if self.project.install_prefix is None:
             self.project.install_prefix = 'opt'
@@ -98,15 +137,19 @@ class Builder:
         template_data = {
                 'name': self.project.name,
                 'version': "%s" % (self.project.version),
+                'release': "%s" % (self.project.release),
                 'build_dir': build_dir,
+                'top_dir': rpm_dir,
                 'build_cmd': self.project.build_cmd,
-                'install_cmd': self.project.install_cmd,
+                'install_cmd': self.mod_install_cmd,
                 'username': self.project.username,
                 'email': self.project.email,
                 'date': time.strftime("%a %h %d %Y"),
+                'git_url': self.project.git_url,
+                'source': source_file,
             }
 
-        if not os.path.isdir(rpm_dir):
+        if not os.path.isfile(filename):
 
             template_fd = open(os.path.join(templates_dir, 'project.spec'))
             rendered_template = open(filename, 'w+')
@@ -114,14 +157,8 @@ class Builder:
             template_fd.close()
             rendered_template.close()
             
-            os.makedirs(
-                    os.path.join(
-                        rpm_dir, self.project.name, self.project.install_prefix
-                        )
-                    )
-
-        rendered_template = open(os.path.join(rpm_dir, filename), 'a+')
-        rendered_template.write("* %(date)s %(username)s <%(email)s> - %(version)s" % template_data)
+        rendered_template = open(os.path.join(rpm_dir, filename), 'a')
+        rendered_template.write("* %(date)s %(username)s <%(email)s> - %(version)s-%(release)s\n" % template_data)
             
         for git_log in self.git.log():
             rendered_template.write('- %s' % git_log)
@@ -167,15 +204,14 @@ class Builder:
             rvm_env.update(os.environ)
 
         rpm_cmd = self._exec(
-                ['rpmbuild', '-ba', filename],
-                cwd=self.workdir, env=rvm_env
+                ['rpmbuild', '-ba', filename], cwd=self.workdir, env=rvm_env
         )
         
         rpm_cmd.wait()
 
     def deb(self):
         templates = {}
-	templates_dir = os.path.join(self.templates_dir, 'deb')
+        templates_dir = os.path.join(self.templates_dir, 'deb')
         debian_dir = os.path.join(self.workdir, 'debian')
         
         if self.project.install_prefix is None:
@@ -191,7 +227,7 @@ class Builder:
                 'name': self.project.name,
                 'version': "%s" % (self.project.version),
                 'build_cmd': self.project.build_cmd,
-                'install_cmd': self.project.install_cmd,
+                'install_cmd': self.mod_install_cmd,
                 'username': self.project.username,
                 'email': self.project.email,
                 'date': time.strftime("%a, %d %h %Y %T %z"),
