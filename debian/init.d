@@ -1,40 +1,56 @@
-#!/bin/sh
+#!/bin/bash
+#
+### BEGIN INIT INFO
+# Provides:		bricklayer
+# Required-Start:	$network $local_fs $remote_fs
+# Required-Stop:	$network $local_fs $remote_fs
+# Should-Start:		$network
+# Should-Stop:		$network
+# Default-Start:	2 3 4 5
+# Default-Stop:		0 1 6
+# Short-Description:	start and stop Bricklayer Package Builder
+# Description:		The Bricklayer Package Builder builds packages to
+# 			help you automate builds and upload packages to repositories.
+### END INIT INFO
 
-PATH=/sbin:/bin:/usr/sbin:/usr/bin
+PATH=/usr/bin:/usr/sbin:/bin:/sbin
+DAEMON=/usr/bin/twistd
+RUNDIR=/var/run
+PIDFILE=/var/run/bricklayer.pid
+TACFILE=/etc/bricklayer/bricklayer.tac
+LOGFILE=/var/log/bricklayer.log
 
-pidfile=/var/run/bricklayer.pid rundir=/var/lib/bricklayer/ file=/etc/bricklayer/bricklayer.tac logfile=/var/log/bricklayer.log
+# Include bricklayer defaults if available
+if [ -r /etc/default/bricklayer ]; then
+	. /etc/default/bricklayer
+fi
 
-[ -r /etc/default/bricklayer ] && . /etc/default/bricklayer
-
-test -x /usr/bin/twistd || exit 0
-test -r $file || exit 0
+test -x ${DAEMON} || exit 0
+test -r ${TACFILE} || exit 0
 
 case "$1" in
-    start)
-        echo -n "Starting bricklayer: twistd"
-        start-stop-daemon --start --quiet --exec /usr/bin/twistd -- --pidfile=$pidfile --rundir=$rundir --python=$file --logfile=$logfile
-        echo "."	
-    ;;
-
-    stop)
-        echo -n "Stopping bricklayer: twistd"
-        start-stop-daemon --stop --quiet --pidfile $pidfile
-        echo "."	
-    ;;
-
-    restart)
-        $0 stop
-        $0 start
-    ;;
-
-    force-reload)
-        $0 restart
-    ;;
-
-    *)
-        echo "Usage: /etc/init.d/bricklayer {start|stop|restart|force-reload}" >&2
-        exit 1
-    ;;
+  start)
+	echo -n "Starting bricklayer"
+	start-stop-daemon --start --quiet --exec ${DAEMON} -- -y ${TACFILE} --rundir=${RUNDIR} --pidfile=${PIDFILE} --logfile=${LOGFILE}
+	echo "."	
+	;;
+  stop)
+	echo -n "Stopping bricklayer"
+	start-stop-daemon --stop --quiet --pidfile ${PIDFILE}
+	echo "."
+	;;
+  restart)
+	${0} stop
+	sleep 1
+	${0} start
+	;;
+  force-reload)
+	${0} restart
+	;;
+  *)
+	echo "Usage: ${0} {start|stop|restart|force-reload}" >&2
+	exit 1
+	;;
 esac
 
 exit 0
