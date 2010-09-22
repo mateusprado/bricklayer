@@ -110,18 +110,27 @@ class Builder:
         source_file = os.path.join(source_dir, '%s.tar.gz' % file_prefix)
         tar = tarfile.open(source_file, 'w:gz')
 
-        shutil.copytree(self.workdir, '/tmp/%s' % file_prefix)
-        
         cur_dir = os.path.abspath(os.curdir)
-        os.chdir('/tmp/')
+        os.chdir(self.workspace)
+
+        if os.path.isdir(file_prefix):
+            shutil.rmtree(file_prefix)
+
+        shutil.copytree(self.project.name, file_prefix)
+
+        if os.path.isfile(source_file):
+            os.unlink(source_file)
+
         tar.add(file_prefix)
         tar.close()
         shutil.rmtree(file_prefix)
         os.chdir(cur_dir)
 
         templates_dir = os.path.join(self.templates_dir, 'rpm')
-        if self.project.release is None:
+        if self.project.release is None or self.project.release is 0:
             self.project.release = 1
+        elif self.project.release >= 1:
+            self.project.release = "%s" % (int(self.project.release) + 1)
 
         if self.project.install_prefix is None:
             self.project.install_prefix = 'opt'
@@ -149,13 +158,15 @@ class Builder:
                 'source': source_file,
             }
 
-        if not os.path.isfile(filename):
-
+        if os.path.isfile(os.path.join(self.workdir, 'rpm', "%s.spec" % self.project.name)) and not os.path.isfile(filename):
+            template_fd = open(os.path.join(self.workdir, 'rpm', "%s.spec" % self.project.name))
+        else:
             template_fd = open(os.path.join(templates_dir, 'project.spec'))
-            rendered_template = open(filename, 'w+')
-            rendered_template.write(pystache.template.Template(template_fd.read()).render(context=template_data))
-            template_fd.close()
-            rendered_template.close()
+
+        rendered_template = open(filename, 'w+')
+        rendered_template.write(pystache.template.Template(template_fd.read()).render(context=template_data))
+        template_fd.close()
+        rendered_template.close()
             
         rendered_template = open(os.path.join(rpm_dir, filename), 'a')
         rendered_template.write("* %(date)s %(username)s <%(email)s> - %(version)s-%(release)s\n" % template_data)
@@ -164,7 +175,6 @@ class Builder:
             rendered_template.write('- %s' % git_log)
         rendered_template.close()
         
-        self.project.release = "%s" % (int(self.project.release) + 1)
         self.project.save()
             
         rvm_env = {}
