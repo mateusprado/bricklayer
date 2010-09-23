@@ -97,36 +97,42 @@ class Builder:
             log.err("build failed: %s" % repr(e))
 
     def rpm(self):
-        file_prefix = '%s-%s' % (self.project.name, self.project.version)
         rpm_dir = os.path.join(self.workspace, 'rpm')
-        filename = os.path.join(rpm_dir, 'SPECS', "%s.spec" % self.project.name)
+        templates_dir = os.path.join(self.templates_dir, 'rpm')
+        spec_filename = os.path.join(rpm_dir, 'SPECS', "%s.spec" % self.project.name)
+        dir_prefix = "%s-%s" % (self.project.name, self.project.version)
 
         for dir in ('SOURCES', 'SPECS', 'RPMS', 'SRPMS', 'BUILD', 'TMP'):
             if not os.path.isdir(os.path.join(rpm_dir, dir)):
                 os.makedirs(os.path.join(rpm_dir, dir))
         
         build_dir = os.path.join(self.workspace, 'rpm', 'TMP')
-        source_dir = os.path.join(rpm_dir, 'SOURCES')
-        source_file = os.path.join(source_dir, '%s.tar.gz' % file_prefix)
-        tar = tarfile.open(source_file, 'w:gz')
+        source_file = os.path.join(rpm_dir, 'SOURCES', '%s.tar.gz' % dir_prefix)
 
-        cur_dir = os.path.abspath(os.curdir)
+        cur_dir = os.getcwd()
         os.chdir(self.workspace)
 
-        if os.path.isdir(file_prefix):
-            shutil.rmtree(file_prefix)
+        if os.path.isdir(dir_prefix):
+            shutil.rmtree(dir_prefix)
 
-        shutil.copytree(self.project.name, file_prefix)
+        shutil.copytree(self.project.name, dir_prefix)
 
         if os.path.isfile(source_file):
             os.unlink(source_file)
 
-        tar.add(file_prefix)
+        tar = tarfile.open(source_file, 'w:gz')
+        tar.add(dir_prefix)
         tar.close()
-        shutil.rmtree(file_prefix)
+        shutil.rmtree(dir_prefix)
         os.chdir(cur_dir)
 
-        templates_dir = os.path.join(self.templates_dir, 'rpm')
+        cur_lines_spec_file = None
+        if os.path.isfile(spec_filename):
+            cur_lines_spec_file = open(spec_filename).readlines()
+            for line in cur_lines_spec_file:
+                if line.startswith("Release:"):
+                    self.project.release = line.split(":")[1].strip()
+
         if self.project.release is None or self.project.release is 0:
             self.project.release = 1
         elif self.project.release >= 1:
@@ -135,7 +141,7 @@ class Builder:
         if self.project.install_prefix is None:
             self.project.install_prefix = 'opt'
 
-        if not self.project.install_cmd :
+        if not self.project.install_cmd:
 
             self.project.install_cmd = 'cp -r \`ls | grep -Ev "debian|rpm"\` %s/%s/%s' % (
                     self.build_dir,
@@ -148,7 +154,6 @@ class Builder:
                 'version': "%s" % (self.project.version),
                 'release': "%s" % (self.project.release),
                 'build_dir': build_dir,
-                'top_dir': rpm_dir,
                 'build_cmd': self.project.build_cmd,
                 'install_cmd': self.mod_install_cmd,
                 'username': self.project.username,
@@ -158,25 +163,28 @@ class Builder:
                 'source': source_file,
             }
 
-        if os.path.isfile(os.path.join(self.workdir, 'rpm', "%s.spec" % self.project.name)) and not os.path.isfile(filename):
-            template_fd = open(os.path.join(self.workdir, 'rpm', "%s.spec" % self.project.name))
+        if os.path.isfile(spec_filename):
+            if os.path.isfile(os.path.join(self.workdir, 'rpm', "%s.spec" % self.project.name)):            
+                template_fd = open(os.path.join(self.workdir, 'rpm', "%s.spec" % self.project.name))
+            else:
+                template_fd = open(spec_filename)
         else:
             template_fd = open(os.path.join(templates_dir, 'project.spec'))
 
-        rendered_template = open(filename, 'w+')
+        rendered_template = open(spec_filename, 'w+')
         rendered_template.write(pystache.template.Template(template_fd.read()).render(context=template_data))
         template_fd.close()
         rendered_template.close()
-            
-        rendered_template = open(os.path.join(rpm_dir, filename), 'a')
+
+        rendered_template = open(spec_filename, 'a')
         rendered_template.write("* %(date)s %(username)s <%(email)s> - %(version)s-%(release)s\n" % template_data)
-            
+
         for git_log in self.git.log():
             rendered_template.write('- %s' % git_log)
         rendered_template.close()
-        
+
         self.project.save()
-            
+
         rvm_env = {}
         rvm_rc = os.path.join(self.workdir, '.rvmrc')
         rvm_rc_example = rvm_rc +  ".example"
@@ -213,8 +221,8 @@ class Builder:
                 pass
             rvm_env.update(os.environ)
 
-        rpm_cmd = self._exec(
-                ['rpmbuild', '-ba', filename], cwd=self.workdir, env=rvm_env
+        rpm_cmd = self._exec([ "rpmbuild", "--define", "_topdir %s" % rpm_dir, "-ba", spec_filename ],
+            cwd=self.workdir, env=rvm_env
         )
         
         rpm_cmd.wait()

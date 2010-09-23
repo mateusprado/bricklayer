@@ -1,13 +1,15 @@
-%define _topdir {{ top_dir }}
-
 # Basic Information
+Summary: {{ name }} Locaweb project
 Name: {{ name }} 	
 Version: {{ version }}	
 Release: {{ release }}
-Summary: {{ name }} Locaweb project
 Group: Locaweb
 License: Internal	
 URL: {{ git_url }}
+
+# Dependency Information
+#BuildRequires: {{ build_packages }}
+#Requires: {{ required_packages }}
 
 # Packager Information
 Packager: Bricklayer Builder <bricklayer@locaweb.com.br>
@@ -18,10 +20,6 @@ BuildRoot: {{ build_dir }}
 # Source Information
 Source0: {{ source }}
 #Patch0:
-
-# Dependency Information
-#BuildRequires: {{ build_packages }}
-#Requires: {{ required_packages }}
 
 %description
 {{ name }} Locaweb project
