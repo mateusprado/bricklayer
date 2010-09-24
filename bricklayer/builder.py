@@ -7,6 +7,7 @@ import glob
 import ConfigParser
 import tarfile
 import shutil
+import re
 
 sys.path.append(os.path.join(os.path.dirname(__file__), 'utils'))
 
@@ -45,11 +46,11 @@ class Builder:
         return subprocess.Popen(cmd, *args, **kwargs)
 
     def dos2unix(self, file):
-        import re
         f = open(file, 'r').readlines()
         new_file = open(file, "w+")
+        match = re.compile('\r\n')
         for line in f:
-            new_file.write(re.compile('\r\n').sub('\n', line))
+            new_file.write(match.sub('\n', line))
         new_file.close()
 
     def build_project(self, force=False):
