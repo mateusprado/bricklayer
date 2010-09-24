@@ -44,6 +44,14 @@ class Builder:
         kwargs.update({'stdout': self.stdout, 'stderr': self.stderr})
         return subprocess.Popen(cmd, *args, **kwargs)
 
+    def dos2unix(self, file):
+        import re
+        f = open(file, 'r').readlines()
+        new_file = open(file, "w+")
+        for line in f:
+            new_file.write(re.compile('\r\n').sub('\n', line))
+        new_file.close()
+
     def build_project(self, force=False):
         try:
             if force:
@@ -126,12 +134,13 @@ class Builder:
         shutil.rmtree(dir_prefix)
         os.chdir(cur_dir)
 
-        cur_lines_spec_file = None
+        spec_file_lines = None
         if os.path.isfile(spec_filename):
-            cur_lines_spec_file = open(spec_filename).readlines()
-            for line in cur_lines_spec_file:
+            spec_file_lines = open(spec_filename).readlines()
+            for line in spec_file_lines:
                 if line.startswith("Release:"):
                     self.project.release = line.split(":")[1].strip()
+            os.unlink(spec_filename)
 
         if self.project.release is None or self.project.release is 0:
             self.project.release = 1
@@ -149,6 +158,30 @@ class Builder:
                     self.project.name
                 )
 
+        rvm_rc = os.path.join(self.workdir, '.rvmrc')
+        rvm_rc_example = rvm_rc +  ".example"
+        has_rvm = False
+
+        if os.path.isfile(rvm_rc):
+            has_rvm = True
+        elif os.path.isfile(rvm_rc_example):
+            has_rvm = True
+            rvm_rc = rvm_rc_example
+        
+        if has_rvm:
+            rvmexec = open(rvm_rc).read()
+            log.msg("RVMRC: %s" % rvmexec)
+            
+            # I need the output not to log on file
+            rvm_cmd = subprocess.Popen('/usr/local/bin/rvm info %s' % rvmexec.split()[2],
+                    shell=True, stdout=subprocess.PIPE)
+            rvm_cmd.wait()
+            for line in rvm_cmd.stdout.readlines():
+                if 'PATH' in line or 'HOME' in line:
+                    name, value = line.split()
+                    log.msg("%s %s" % (name, value))
+                    os.environ[name.strip(':')] = value
+
         template_data = {
                 'name': self.project.name,
                 'version': "%s" % (self.project.version),
@@ -161,13 +194,16 @@ class Builder:
                 'date': time.strftime("%a %h %d %Y"),
                 'git_url': self.project.git_url,
                 'source': source_file,
+                'gem_path': "GEM_PATH=\"%s\"" % os.environ['GEM_PATH'],
+                'my_ruby_home': "MY_RUBY_HOME=\"%s\"" % os.environ['MY_RUBY_HOME'],
+                'path': "PATH=\"%s\"" % os.environ['PATH'],
+                'bundle_path': "BUNDLE_PATH=\"%s\"" % os.environ['BUNDLE_PATH'],
+                'gem_home': "GEM_HOME=\"%s\"" % os.environ['GEM_HOME'],
             }
 
-        if os.path.isfile(spec_filename):
-            if os.path.isfile(os.path.join(self.workdir, 'rpm', "%s.spec" % self.project.name)):            
-                template_fd = open(os.path.join(self.workdir, 'rpm', "%s.spec" % self.project.name))
-            else:
-                template_fd = open(spec_filename)
+        if os.path.isfile(os.path.join(self.workdir, 'rpm', "%s.spec" % self.project.name)):            
+            self.dos2unix(os.path.join(self.workdir, 'rpm', "%s.spec" % self.project.name))
+            template_fd = open(os.path.join(self.workdir, 'rpm', "%s.spec" % self.project.name))
         else:
             template_fd = open(os.path.join(templates_dir, 'project.spec'))
 
@@ -185,44 +221,8 @@ class Builder:
 
         self.project.save()
 
-        rvm_env = {}
-        rvm_rc = os.path.join(self.workdir, '.rvmrc')
-        rvm_rc_example = rvm_rc +  ".example"
-        has_rvm = False
-
-        if os.path.isfile(rvm_rc):
-            has_rvm = True
-        elif os.path.isfile(rvm_rc_example):
-            has_rvm = True
-            rvm_rc = rvm_rc_example
-        
-        if has_rvm:
-            rvmexec = open(rvm_rc).read()
-            log.msg("RVMRC: %s" % rvmexec)
-            
-            # I need the output not to log on file
-            rvm_cmd = subprocess.Popen('/usr/local/bin/rvm info %s' % rvmexec.split()[1],
-                    shell=True, stdout=subprocess.PIPE)
-            rvm_cmd.wait()
-            for line in rvm_cmd.stdout.readlines():
-                if 'PATH' in line or 'HOME' in line:
-                    name, value = line.split()
-                    rvm_env[name.strip(':')] = value.strip('"')
-            rvm_env['HOME'] = os.environ['HOME']
-            log.msg(rvm_env)
-
-        if len(rvm_env.keys()) < 1:
-            rvm_env = os.environ
-        else:
-            try:
-                os.environ.pop('GEM_HOME')
-                os.environ.pop('BUNDLER_PATH')
-            except Exception, e:
-                pass
-            rvm_env.update(os.environ)
-
         rpm_cmd = self._exec([ "rpmbuild", "--define", "_topdir %s" % rpm_dir, "-ba", spec_filename ],
-            cwd=self.workdir, env=rvm_env
+            cwd=self.workdir, env=os.environ
         )
         
         rpm_cmd.wait()
