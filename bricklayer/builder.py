@@ -180,7 +180,7 @@ class Builder:
                 if 'PATH' in line or 'HOME' in line:
                     name, value = line.split()
                     log.msg("%s %s" % (name, value))
-                    os.environ[name.strip(':')] = value
+                    os.environ[name.strip(':')] = value.replace('"', '')
 
         template_data = {
                 'name': self.project.name,
