@@ -195,11 +195,6 @@ class Builder:
                 'date': time.strftime("%a %h %d %Y"),
                 'git_url': self.project.git_url,
                 'source': source_file,
-                'gem_path': "GEM_PATH=\"%s\"" % os.environ['GEM_PATH'],
-                'my_ruby_home': "MY_RUBY_HOME=\"%s\"" % os.environ['MY_RUBY_HOME'],
-                'path': "PATH=\"%s\"" % os.environ['PATH'],
-                'bundle_path': "BUNDLE_PATH=\"%s\"" % os.environ['BUNDLE_PATH'],
-                'gem_home': "GEM_HOME=\"%s\"" % os.environ['GEM_HOME'],
             }
 
         if os.path.isfile(os.path.join(self.workdir, 'rpm', "%s.spec" % self.project.name)):            
