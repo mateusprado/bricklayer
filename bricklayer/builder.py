@@ -159,30 +159,6 @@ class Builder:
                     self.project.name
                 )
 
-        rvm_rc = os.path.join(self.workdir, '.rvmrc')
-        rvm_rc_example = rvm_rc +  ".example"
-        has_rvm = False
-
-        if os.path.isfile(rvm_rc):
-            has_rvm = True
-        elif os.path.isfile(rvm_rc_example):
-            has_rvm = True
-            rvm_rc = rvm_rc_example
-        
-        if has_rvm:
-            rvmexec = open(rvm_rc).read()
-            log.msg("RVMRC: %s" % rvmexec)
-            
-            # I need the output not to log on file
-            rvm_cmd = subprocess.Popen('/usr/local/bin/rvm info %s' % rvmexec.split()[2],
-                    shell=True, stdout=subprocess.PIPE)
-            rvm_cmd.wait()
-            for line in rvm_cmd.stdout.readlines():
-                if 'PATH' in line or 'HOME' in line:
-                    name, value = line.split()
-                    log.msg("%s %s" % (name, value))
-                    os.environ[name.strip(':')] = value.replace('"', '')
-
         template_data = {
                 'name': self.project.name,
                 'version': "%s" % (self.project.version),
@@ -196,6 +172,48 @@ class Builder:
                 'git_url': self.project.git_url,
                 'source': source_file,
             }
+
+        rvm_rc = os.path.join(self.workdir, '.rvmrc')
+        rvm_rc_example = rvm_rc +  ".example"
+        has_rvm = False
+
+        if os.path.isfile(rvm_rc):
+            has_rvm = True
+        elif os.path.isfile(rvm_rc_example):
+            has_rvm = True
+            rvm_rc = rvm_rc_example
+        
+        if has_rvm:
+            rvmexec = open(rvm_rc).read()
+            log.msg("RVMRC: %s" % rvmexec)
+
+            # Fix to rvm users that cannot read the f* manual
+            # for this i need to fix their stupid .rvmrc
+            if rvmexec.split()[1] == "use":
+                rvmexec = rvmexec.split()[2]
+            else:
+                rvmexec = rvmexec.split()[1]
+            
+            # I need the output not to log on file
+            rvm_cmd = subprocess.Popen('/usr/local/bin/rvm info %s' % rvmexec,
+                    shell=True, stdout=subprocess.PIPE)
+            rvm_cmd.wait()
+
+            rvm_env = {}
+            for line in rvm_cmd.stdout.readlines():
+                if 'PATH' in line or 'HOME' in line:
+                    name, value = line.split()
+                    rvm_env[name.strip(':')] = value.replace('"', '')
+            rvm_env['HOME'] = os.environ['HOME']
+
+        if len(rvm_env.keys()) < 1:
+            rvm_env = os.environ
+        else:
+            for param in os.environ.keys():
+                if param.find('PROXY') != -1:
+                    rvm_env[param] = os.environ[param]
+
+        log.msg(rvm_env)
 
         if os.path.isfile(os.path.join(self.workdir, 'rpm', "%s.spec" % self.project.name)):            
             self.dos2unix(os.path.join(self.workdir, 'rpm', "%s.spec" % self.project.name))
@@ -218,9 +236,9 @@ class Builder:
         self.project.save()
 
         rpm_cmd = self._exec([ "rpmbuild", "--define", "_topdir %s" % rpm_dir, "-ba", spec_filename ],
-            cwd=self.workdir, env=os.environ
+            cwd=self.workdir, env=rvm_env
         )
-        
+
         rpm_cmd.wait()
 
     def deb(self):
