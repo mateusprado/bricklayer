@@ -8,6 +8,7 @@ import ConfigParser
 import tarfile
 import shutil
 import re
+import ftplib
 
 sys.path.append(os.path.join(os.path.dirname(__file__), 'utils'))
 
@@ -25,6 +26,10 @@ class Builder:
         self.templates_dir = BrickConfig().get('workspace', 'template_dir')
         self.git = git.Git(self.project)
         self.build_system = BrickConfig().get('build', 'system')
+        self.ftp_host = BrickConfig().get('ftp', 'host')
+        self.ftp_user = BrickConfig().get('ftp', 'user')
+        self.ftp_pass = BrickConfig().get('ftp', 'pass')
+        self.ftp_dir = BrickConfig().get('ftp', 'dir')
         
         if self.build_system == 'rpm':
             self.mod_install_cmd = self.project.install_cmd.replace(
@@ -94,6 +99,8 @@ class Builder:
                 log.msg('Generating packages for %s on %s'  % (self.project, self.workdir))
                 if self.build_system == 'rpm':
                     self.rpm()
+                    self.upload_rpm()
+
                 elif self.build_system == 'deb':
                     self.deb()
                     self.upload_to()
@@ -134,14 +141,6 @@ class Builder:
         tar.close()
         shutil.rmtree(dir_prefix)
         os.chdir(cur_dir)
-
-        spec_file_lines = None
-        if os.path.isfile(spec_filename):
-            spec_file_lines = open(spec_filename).readlines()
-            for line in spec_file_lines:
-                if line.startswith("Release:"):
-                    self.project.release = line.split(":")[1].strip()
-            os.unlink(spec_filename)
 
         if self.project.release is None or self.project.release is 0:
             self.project.release = 1
@@ -240,6 +239,45 @@ class Builder:
         )
 
         rpm_cmd.wait()
+
+    def upload_rpm(self):
+        if self.ftp_host:
+            rpm_dir = os.path.join(self.workspace, 'rpm')
+            rpm_prefix = "%s-%s-%s" % (self.project.name, self.project.version, self.project.release)
+            list = []
+            for path, dirs, files in os.walk(rpm_dir):
+                if os.path.isdir(path):
+                    for file in (os.path.join(path, file) for file in files):
+                        try:
+                            if os.path.isfile(file) and file.find(rpm_prefix) != -1:
+                                list.append(file)
+                        except Exception, e:
+                            log.err(e)
+
+            ftp = ftplib.FTP()
+            try:
+                ftp.connect(self.ftp_host)
+                if self.ftp_user and self.ftp_pass:
+                    ftp.login(self.ftp_user, self.ftp_pass)
+                else:
+                    ftp.login()
+                if self.ftp_dir:
+                    ftp.cwd(self.ftp_dir)
+            except ftplib.error_reply, e:
+                log.err('Cannot conect to ftp server %s' % e)
+
+            for file in list:
+                filename = os.path.basename(file)
+                try:
+                    if os.path.isfile(file):
+                        f = open(file, 'rb')
+                        ftp.storbinary('STOR %s' % filename, f)
+                        f.close()
+                        log.msg("File %s has been successfully sent to ftp server %s" % (filename, self.ftp_host))
+                except ftplib.error_reply, e:
+                    log.err(e)
+
+            ftp.quit()
 
     def deb(self):
         templates = {}
