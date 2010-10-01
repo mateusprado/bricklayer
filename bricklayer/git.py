@@ -37,8 +37,12 @@ class Git(object):
         git_cmd = self._exec_git(['git', 'pull'], cwd=self.workdir)
         git_cmd.wait()
     
-    def checkout(self, tag='master'):
+    def checkout_tag(self, tag='master'):
         git_cmd = self._exec_git(['git', 'checkout', tag], cwd=self.workdir)
+        git_cmd.wait()
+    
+    def branch(self, branch='master'):
+        git_cmd = self._exec_git(['git', 'checkout', '-b', branch, '--track', 'origin/%s' % branch])
         git_cmd.wait()
 
     def last_commit(self):

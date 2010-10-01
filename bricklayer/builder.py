@@ -63,6 +63,8 @@ class Builder:
             log.msg("Checking project: %s" % self.project.name)
             try:
                 if os.path.isdir(self.git.workdir):
+                    if self.project.branch != 'master':
+                        self.git.branch(self.project.branch)
                     self.git.pull()
                 else:
                     self.git.clone()
@@ -81,7 +83,7 @@ class Builder:
                 log.msg('Last tag found: %s' % tags[-1])
                 if self.project.last_tag != tags[-1]:
                     self.project.last_tag = tags[-1]
-                    self.git.checkout(self.project.last_tag)
+                    self.git.checkout_tag(self.project.last_tag)
                     build = 1
 
             if self.project.last_tag == None and self.project.last_commit != last_commit:
@@ -99,7 +101,7 @@ class Builder:
                     self.upload_to()
                 log.msg("build complete")
 
-            self.git.checkout('master') 
+            self.git.checkout_tag('master') 
         
         except Exception, e:
             log.err()
