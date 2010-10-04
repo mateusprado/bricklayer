@@ -5,14 +5,13 @@ from twisted.python import log
 from config import BrickConfig
 
 class Git(object):
-    def __init__(self, project, workdir=None, branch='master'):
+    def __init__(self, project, workdir=None):
         _workdir = workdir
         if not _workdir:
             _workdir = BrickConfig().get('workspace', 'dir')
 
         self.workdir = os.path.join(_workdir, project.name)
         self.project = project
-        self.branch = branch
 
     def _exec_git(self, cmd=[], cwd='.', stdout=None):
         if stdout is None:
@@ -29,7 +28,7 @@ class Git(object):
                     return int(match.group(1))
 
     def clone(self):
-        log.msg("Git clone")
+        log.msg("Git clone %s" % self.project.git_url)
         git_cmd = self._exec_git(['git', 'clone', self.project.git_url, self.workdir])
         git_cmd.wait()
     
@@ -41,9 +40,10 @@ class Git(object):
         git_cmd = self._exec_git(['git', 'checkout', tag], cwd=self.workdir)
         git_cmd.wait()
     
-    def branch(self, branch='master'):
-        git_cmd = self._exec_git(['git', 'checkout', '-b', branch, '--track', 'origin/%s' % branch])
-        git_cmd.wait()
+    def branch(self, branch=''):
+        if branch != '':
+            git_cmd = self._exec_git(['git', 'checkout', '-b', branch, '--track', 'origin/%s' % branch], cwd=self.workdir)
+            git_cmd.wait()
 
     def last_commit(self):
         return open(os.path.join(self.workdir, '.git', 'refs', 'heads', 'master')).read()
@@ -60,6 +60,10 @@ class Git(object):
 
     def create_tag(self, tag=''):
         git_cmd = self._exec_git(['git', 'tag', str(tag)], cwd=self.workdir)
+        git_cmd.wait()
+
+    def create_branch(self, branch=''):
+        git_cmd = self._exec_git(['git', 'checkout', '-b', branch], cwd=self.workdir)
         git_cmd.wait()
 
     def log(self, number=3):

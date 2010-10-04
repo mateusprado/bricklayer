@@ -1,4 +1,6 @@
 import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), 'utils'))
 from threading import Lock
 from sqlalchemy import Column, Integer, String, create_engine
 from sqlalchemy.pool import SingletonThreadPool
@@ -62,6 +64,7 @@ class Projects(Base):
     repository_url = Column(String)
     version = Column(String)
     release = Column(String)
+    branch = Column(String)
 
     def __init__(self, name='', git_url='', install_cmd='', version=''):
         self.name = name
@@ -95,7 +98,15 @@ class Projects(Base):
     def delete(self):
         Session().get().delete(self)
         Session().get().commit()
+
+    def create_table(self, engine):
+        print engine
+        self.metadata.create_all(engine)
     
 if __name__ == '__main__':
+    BrickConfig('/etc/bricklayer/bricklayer.ini')
+
+    _engine = create_engine(BrickConfig().get('databases', 'uri'), 
+                                     poolclass=SingletonThreadPool)
     projects_db = Projects()
-    projects_db.metadata.create_all(Session.get_engine())
+    projects_db.create_table(_engine)

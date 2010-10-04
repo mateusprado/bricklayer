@@ -108,7 +108,7 @@ class Builder:
                     self.upload_to()
                 log.msg("build complete")
 
-            self.git.checkout_tag('master') 
+            #self.git.checkout_tag('master') 
         
         except Exception, e:
             log.err()
@@ -385,9 +385,12 @@ class Builder:
         upload_cmd = self._exec(['dput',  changes_file])
         upload_cmd.wait()
 
-    def promote_to(self, release):
+    def promote_to(self, version, release):
+        self.project.version = version
         self.project.release = release
         self.project.save()
-        self.git.create_tag("%s/%s" % (release, self.project.version))
-        dch_cmd = self._exec(['dch', '-r', '--no-force-save-on-release', '-d', release], cwd=self.workdir)
+
+    def promote_deb(self):
+        self.git.create_tag("%s.%s" % (self.project.version, self.project.release))
+        dch_cmd = self._exec(['dch', '-r', '--no-force-save-on-release', '-d', '%s.%s' % (self.project.version, self.project.release)], cwd=self.workdir)
         dch_cmd.wait()
