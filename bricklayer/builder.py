@@ -8,6 +8,7 @@ import ConfigParser
 import tarfile
 import shutil
 import re
+import ftplib
 
 sys.path.append(os.path.join(os.path.dirname(__file__), 'utils'))
 
@@ -25,6 +26,10 @@ class Builder:
         self.templates_dir = BrickConfig().get('workspace', 'template_dir')
         self.git = git.Git(self.project)
         self.build_system = BrickConfig().get('build', 'system')
+        self.ftp_host = BrickConfig().get('ftp', 'host')
+        self.ftp_user = BrickConfig().get('ftp', 'user')
+        self.ftp_pass = BrickConfig().get('ftp', 'pass')
+        self.ftp_dir = BrickConfig().get('ftp', 'dir')
         
         if self.build_system == 'rpm':
             self.mod_install_cmd = self.project.install_cmd.replace(
@@ -96,6 +101,8 @@ class Builder:
                 log.msg('Generating packages for %s on %s'  % (self.project, self.workdir))
                 if self.build_system == 'rpm':
                     self.rpm()
+                    self.upload_rpm()
+
                 elif self.build_system == 'deb':
                     self.deb()
                     self.upload_to()
@@ -137,14 +144,6 @@ class Builder:
         shutil.rmtree(dir_prefix)
         os.chdir(cur_dir)
 
-        spec_file_lines = None
-        if os.path.isfile(spec_filename):
-            spec_file_lines = open(spec_filename).readlines()
-            for line in spec_file_lines:
-                if line.startswith("Release:"):
-                    self.project.release = line.split(":")[1].strip()
-            os.unlink(spec_filename)
-
         if self.project.release is None or self.project.release is 0:
             self.project.release = 1
         elif self.project.release >= 1:
@@ -161,30 +160,6 @@ class Builder:
                     self.project.name
                 )
 
-        rvm_rc = os.path.join(self.workdir, '.rvmrc')
-        rvm_rc_example = rvm_rc +  ".example"
-        has_rvm = False
-
-        if os.path.isfile(rvm_rc):
-            has_rvm = True
-        elif os.path.isfile(rvm_rc_example):
-            has_rvm = True
-            rvm_rc = rvm_rc_example
-        
-        if has_rvm:
-            rvmexec = open(rvm_rc).read()
-            log.msg("RVMRC: %s" % rvmexec)
-            
-            # I need the output not to log on file
-            rvm_cmd = subprocess.Popen('/usr/local/bin/rvm info %s' % rvmexec.split()[2],
-                    shell=True, stdout=subprocess.PIPE)
-            rvm_cmd.wait()
-            for line in rvm_cmd.stdout.readlines():
-                if 'PATH' in line or 'HOME' in line:
-                    name, value = line.split()
-                    log.msg("%s %s" % (name, value))
-                    os.environ[name.strip(':')] = value.replace('"', '')
-
         template_data = {
                 'name': self.project.name,
                 'version': "%s" % (self.project.version),
@@ -198,6 +173,48 @@ class Builder:
                 'git_url': self.project.git_url,
                 'source': source_file,
             }
+
+        rvm_rc = os.path.join(self.workdir, '.rvmrc')
+        rvm_rc_example = rvm_rc +  ".example"
+        has_rvm = False
+
+        if os.path.isfile(rvm_rc):
+            has_rvm = True
+        elif os.path.isfile(rvm_rc_example):
+            has_rvm = True
+            rvm_rc = rvm_rc_example
+        
+        if has_rvm:
+            rvmexec = open(rvm_rc).read()
+            log.msg("RVMRC: %s" % rvmexec)
+
+            # Fix to rvm users that cannot read the f* manual
+            # for this i need to fix their stupid .rvmrc
+            if rvmexec.split()[1] == "use":
+                rvmexec = rvmexec.split()[2]
+            else:
+                rvmexec = rvmexec.split()[1]
+            
+            # I need the output not to log on file
+            rvm_cmd = subprocess.Popen('/usr/local/bin/rvm info %s' % rvmexec,
+                    shell=True, stdout=subprocess.PIPE)
+            rvm_cmd.wait()
+
+            rvm_env = {}
+            for line in rvm_cmd.stdout.readlines():
+                if 'PATH' in line or 'HOME' in line:
+                    name, value = line.split()
+                    rvm_env[name.strip(':')] = value.replace('"', '')
+            rvm_env['HOME'] = os.environ['HOME']
+
+        if len(rvm_env.keys()) < 1:
+            rvm_env = os.environ
+        else:
+            for param in os.environ.keys():
+                if param.find('PROXY') != -1:
+                    rvm_env[param] = os.environ[param]
+
+        log.msg(rvm_env)
 
         if os.path.isfile(os.path.join(self.workdir, 'rpm', "%s.spec" % self.project.name)):            
             self.dos2unix(os.path.join(self.workdir, 'rpm', "%s.spec" % self.project.name))
@@ -220,10 +237,49 @@ class Builder:
         self.project.save()
 
         rpm_cmd = self._exec([ "rpmbuild", "--define", "_topdir %s" % rpm_dir, "-ba", spec_filename ],
-            cwd=self.workdir, env=os.environ
+            cwd=self.workdir, env=rvm_env
         )
-        
+
         rpm_cmd.wait()
+
+    def upload_rpm(self):
+        if self.ftp_host:
+            rpm_dir = os.path.join(self.workspace, 'rpm')
+            rpm_prefix = "%s-%s-%s" % (self.project.name, self.project.version, self.project.release)
+            list = []
+            for path, dirs, files in os.walk(rpm_dir):
+                if os.path.isdir(path):
+                    for file in (os.path.join(path, file) for file in files):
+                        try:
+                            if os.path.isfile(file) and file.find(rpm_prefix) != -1:
+                                list.append(file)
+                        except Exception, e:
+                            log.err(e)
+
+            ftp = ftplib.FTP()
+            try:
+                ftp.connect(self.ftp_host)
+                if self.ftp_user and self.ftp_pass:
+                    ftp.login(self.ftp_user, self.ftp_pass)
+                else:
+                    ftp.login()
+                if self.ftp_dir:
+                    ftp.cwd(self.ftp_dir)
+            except ftplib.error_reply, e:
+                log.err('Cannot conect to ftp server %s' % e)
+
+            for file in list:
+                filename = os.path.basename(file)
+                try:
+                    if os.path.isfile(file):
+                        f = open(file, 'rb')
+                        ftp.storbinary('STOR %s' % filename, f)
+                        f.close()
+                        log.msg("File %s has been successfully sent to ftp server %s" % (filename, self.ftp_host))
+                except ftplib.error_reply, e:
+                    log.err(e)
+
+            ftp.quit()
 
     def deb(self):
         templates = {}
