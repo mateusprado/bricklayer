@@ -64,7 +64,7 @@ class Projects(Base):
     repository_url = Column(String)
     version = Column(String)
     release = Column(String)
-    branch = Column(String)
+    branch = Column(String, default='master')
 
     def __init__(self, name='', git_url='', install_cmd='', version=''):
         self.name = name

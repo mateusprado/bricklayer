@@ -69,7 +69,7 @@ class Builder:
             try:
                 if os.path.isdir(self.git.workdir):
                     if self.project.branch != 'master':
-                        self.git.branch(self.project.branch)
+                        self.git.checkout_branch(self.project.branch)
                     self.git.pull()
                 else:
                     self.git.clone()
@@ -82,12 +82,11 @@ class Builder:
                 os.chdir(self.workdir)
 
             tags = self.git.tags()
-
             last_commit = self.git.last_commit()
             if len(tags) > 0:
-                log.msg('Last tag found: %s' % tags[-1])
-                if self.project.last_tag != tags[-1]:
-                    self.project.last_tag = tags[-1]
+                log.msg('Last tag found: %s' % max(tags))
+                if self.project.last_tag != max(tags):
+                    self.project.last_tag = max(tags)
                     self.git.checkout_tag(self.project.last_tag)
                     build = 1
 

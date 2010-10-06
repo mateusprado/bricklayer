@@ -18,15 +18,6 @@ class Git(object):
             stdout = open('/dev/null', 'w')
         return subprocess.Popen(cmd, cwd=cwd, stdout=stdout)
 
-    def _sort_tags(self, tag):
-        if tag != None:
-            match = re.match(".*?[-/]([0-9.]+)", tag)
-            if match:
-                if '.' in match.group(1):
-                    return match.group(1)
-                else:
-                    return int(match.group(1))
-
     def clone(self):
         log.msg("Git clone %s" % self.project.git_url)
         git_cmd = self._exec_git(['git', 'clone', self.project.git_url, self.workdir])
@@ -40,19 +31,32 @@ class Git(object):
         git_cmd = self._exec_git(['git', 'checkout', tag], cwd=self.workdir)
         git_cmd.wait()
     
-    def branch(self, branch=''):
-        if branch != '':
+    def checkout_branch(self, branch=''):
+        if branch in self.branches():
+            git_cmd = self._exec_git(['git', 'checkout', branch], cwd=self.workdir)
+            git_cmd.wait()
+        elif branch != '' and branch != 'master':
             git_cmd = self._exec_git(['git', 'checkout', '-b', branch, '--track', 'origin/%s' % branch], cwd=self.workdir)
             git_cmd.wait()
 
+    def branches(self):
+        branches_dir = os.path.join(self.workdir, '.git', 'refs', 'heads')
+        return os.listdir(branches_dir)
+
     def last_commit(self):
-        return open(os.path.join(self.workdir, '.git', 'refs', 'heads', 'master')).read()
+        return open(os.path.join(self.workdir, '.git', 'refs', 'heads', self.project.branch)).read()
 
     def tags(self):
         try:
             tagdir = os.path.join(self.workdir, '.git', 'refs', 'tags')
             tags = os.listdir(tagdir)
-            return sorted(tags, key=self._sort_tags)
+            if self.project.branch != 'master':
+                branch_tags = []
+                for tag in tags:
+                    if tag.startswith(self.project.branch):
+                        branch_tags.append(tag)
+                tags = branch_tags
+            return tags
         except Exception, e:
             log.err(repr(e))
             log.err()
