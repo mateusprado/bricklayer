@@ -63,7 +63,7 @@ class Projects(Base):
     email = Column(String)
     repository_url = Column(String)
     version = Column(String)
-    release = Column(String)
+    release_name = Column(String)
     branch = Column(String, default='master')
 
     def __init__(self, name='', git_url='', install_cmd='', version=''):
