@@ -321,9 +321,19 @@ class Builder:
 
             for filename, data in templates.iteritems():
                 open(os.path.join(debian_dir, filename), 'w').write(data)
-            
-        dch_cmd = self._exec(['dch', '--no-auto-nmu', '-i', '** latest commits'], cwd=self.workdir)
-        dch_cmd.wait()
+        
+        if self.project.branch == 'stable':
+            if self.project.last_tag.startswith(self.project.branch):
+                self.project.version = self.project.last_tag.split('_')[1]
+
+            dch_cmd = self._exec(
+                ['dch', '-b', '--newversion', self.project.version, '--force-distribution', '-D', 'stable', '\'*latest commits\''], 
+                cwd=self.workdir
+            )
+            dch_cmd.wait()
+        else:
+            dch_cmd = self._exec(['dch', '--no-auto-nmu', '-i', 'latest commits'], cwd=self.workdir)
+            dch_cmd.wait()
         
         for git_log in self.git.log():
             append_log = self._exec(['dch', '-a', git_log], cwd=self.workdir)
@@ -381,7 +391,10 @@ class Builder:
 
     def upload_to(self):
         changes_file = glob.glob('%s/%s_%s_*.changes' % (self.workspace,self.project.name,self.project.version))[0]
-        upload_cmd = self._exec(['dput',  changes_file])
+        if self.project.branch == 'stable':
+            upload_cmd = self._exec(['dput', self.project.branch, changes_file])
+        else:
+            upload_cmd = self._exec(['dput',  changes_file])
         upload_cmd.wait()
 
     def promote_to(self, version, release):
@@ -391,5 +404,5 @@ class Builder:
 
     def promote_deb(self):
         self.git.create_tag("%s.%s" % (self.project.version, self.project.release))
-        dch_cmd = self._exec(['dch', '-r', '--no-force-save-on-release', '-d', '%s.%s' % (self.project.version, self.project.release)], cwd=self.workdir)
+        dch_cmd = self._exec(['dch', '-r', '--no-force-save-on-release', '--newversion', '%s.%s' % (self.project.version, self.project.release)], cwd=self.workdir)
         dch_cmd.wait()
