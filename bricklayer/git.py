@@ -44,6 +44,9 @@ class Git(object):
         return os.listdir(branches_dir)
 
     def last_commit(self):
+        branch = 'master'
+        if self.project.branch:
+            branch = self.project.branch
         return open(os.path.join(self.workdir, '.git', 'refs', 'heads', self.project.branch)).read()
 
     def tags(self):
