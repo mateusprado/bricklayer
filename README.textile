@@ -4,17 +4,15 @@ Bricklayer builds packages to help you automate builds and upload packages to re
 
 h2. Requirements
 
-Bricklayer uses twisted to serve a restful interface as well as the scheduler interface, it also needs sqlalchemy to save projects in a sqlite database (works with any other database supported by sqlalchemy) but sqlalchemy is included in the project so to install bricklayer dependencies on a debian systems just shot the following in your shell:
-    
-<pre><code>apt-get install python-twisted</code></pre>
+Bricklayer uses twisted to serve a restful interface as well as the scheduler interface, it also needs sqlalchemy to save projects in a sqlite database (works with any other database supported by sqlalchemy). They are already included in the project.
 
 h2. Installation
 
 Bricklayer has a debian directory ready to be built, to do so under a debian-based system run:
 
 <pre>
+export PYTHONPATH="."
 apt-get -y install build-essential devscripts cdbs python-twisted python-setuptools python-simplejson
-easy_install sqlalchemy
 dpkg-buildpackage -rfakeroot # (inside the project directory)
 dpkg -i ../bricklayer*.deb # were * is your architecture and version
 </pre>
