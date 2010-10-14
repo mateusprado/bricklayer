@@ -35,11 +35,11 @@ class BricklayerProtocol(basic.LineReceiver):
             defered.addCallback(onResponse, onError)
     
     def connectionMade(self):
-        pass
+       pass
 
 class BricklayerFactory(protocol.ServerFactory):
     protocol = BricklayerProtocol
-    
+
     def __init__(self):
         self.schedProjects()
 
