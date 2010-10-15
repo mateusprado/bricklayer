@@ -42,14 +42,15 @@ class Project(cyclone.web.RequestHandler):
 
     def put(self, name):
         project = Projects(name)
-        for name, arg in self.request.arguments.iteritems():
-            setattr(project, name, arg[0])
-        try:
-            project.save()
-            self.finish(cyclone.escape.json_encode({'status': 'build scheduled'}))
-        except Exception, e:
-            log.err(e)
-            self.finish(cyclone.escape.json_encode({'status': 'fail'}))
+        if not self.request.arguments.has_key('build'):
+            for name, arg in self.request.arguments.iteritems():
+                setattr(project, name, arg[0])
+            try:
+                project.save()
+                self.finish(cyclone.escape.json_encode({'status': 'build scheduled'}))
+            except Exception, e:
+                log.err(e)
+                self.finish(cyclone.escape.json_encode({'status': 'fail'}))
         reactor.callInThread(forceBuild, project.name)
     
     def get(self, name):
