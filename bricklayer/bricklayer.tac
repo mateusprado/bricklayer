@@ -18,6 +18,7 @@ from builder import Builder
 from projects import Projects
 from config import BrickConfig
 from rest import restApp
+#from dreque import Dreque, DrequeWorker
 
 class BricklayerProtocol(basic.LineReceiver):
     def lineReceived(self, line):
@@ -39,20 +40,25 @@ class BricklayerProtocol(basic.LineReceiver):
 
 class BricklayerFactory(protocol.ServerFactory):
     protocol = BricklayerProtocol
-    
-    def __init__(self):
-        self.schedProjects()
 
-    def buildProject(self, project_name, force=False):
+    def __init__(self):
+        #worker = DrequeWorker(['build'], '127.0.0.1')
+        self.sched_projects()
+        #worker.work()
+
+    def build_project(self, project_name, force=False):
         builder = Builder(project_name)
         builder.build_project(force=force)
     
-    def schedBuilder(self):
+    def sched_builder(self):
+        dreque = Dreque('127.0.0.1')
         for project in Projects.get_all():
-            d = threads.deferToThread(self.buildProject, project.name)
+            log.msg('sched project: %s' % project.name)
+            #dreque.enqueue('build', self.build_project, argument=project.name)
+            d = threads.deferToThread(self.build_project, project.name)
 
-    def schedProjects(self):
-        sched_task = task.LoopingCall(self.schedBuilder)
+    def sched_projects(self):
+        sched_task = task.LoopingCall(self.sched_builder)
         sched_task.start(200.0)
 
 if "BRICKLAYERCONFIG" in os.environ.keys():

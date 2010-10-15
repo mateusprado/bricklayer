@@ -21,7 +21,7 @@ from twisted.python import log
 class Builder:
     def __init__(self, project):
         self.workspace = BrickConfig().get('workspace', 'dir')
-        self.project = Projects.get(project)
+        self.project = Projects(project)
         self.workdir = os.path.join(self.workspace, self.project.name) 
         self.templates_dir = BrickConfig().get('workspace', 'template_dir')
         self.git = git.Git(self.project)
@@ -58,57 +58,62 @@ class Builder:
             new_file.write(match.sub('\n', line))
         new_file.close()
 
-    def build_project(self, force=False):
+    def build_project(self, force=False, a_branch=None):
         try:
             if force:
                 build = 1
             else:
                 build = 0
-            
-            log.msg("Checking project: %s" % self.project.name)
-            try:
-                if os.path.isdir(self.git.workdir):
-                    if self.project.branch != 'master':
-                        self.git.checkout_branch(self.project.branch)
-                    self.git.pull()
-                else:
-                    self.git.clone()
-            except Exception, e:
-                log.err()
-                log.err('Could not clone or update repository')
-                raise
+            if a_branch:
+                branches = [a_branch]
+            else:
+                branches = self.project.branches()
+            for branch in branches:
 
-            if os.path.isdir(self.workdir):
-                os.chdir(self.workdir)
+                log.msg("Checking project: %s" % self.project.name)
+                try:
+                    if os.path.isdir(self.git.workdir):
+                        self.git.checkout_branch(branch)
+                        self.git.pull()
+                    else:
+                        self.git.clone()
+                except Exception, e:
+                    log.err()
+                    log.err('Could not clone or update repository')
+                    raise
 
-            tags = self.git.tags()
-            last_commit = self.git.last_commit()
-            if len(tags) > 0:
-                log.msg('Last tag found: %s' % max(tags))
-                if self.project.last_tag != max(tags):
-                    self.project.last_tag = max(tags)
-                    self.git.checkout_tag(self.project.last_tag)
+                if os.path.isdir(self.workdir):
+                    os.chdir(self.workdir)
+
+                tags = self.git.tags(branch)
+                last_commit = self.git.last_commit(branch)
+
+                if len(tags) > 0:
+                    log.msg('Last tag found: %s' % max(tags))
+                    if self.project.last_tag(branch) != max(tags):
+                        self.project.last_tag(branch, max(tags))
+                        self.git.checkout_tag(self.project.last_tag(branch))
+                        build = 1
+
+                if self.project.last_tag(branch) == None and self.project.last_commit(branch) != last_commit:
+                    self.project.last_commit(branch, last_commit)
                     build = 1
+                    
+                self.project.save()
 
-            if self.project.last_tag == None and self.project.last_commit != last_commit:
-                self.project.last_commit = last_commit
-                build = 1
-                
-            self.project.save()
+                if build == 1:
+                    log.msg('Generating packages for %s on %s'  % (self.project, self.workdir))
+                    if self.build_system == 'rpm':
+                        self.rpm()
+                        self.upload_rpm()
 
-            if build == 1:
-                log.msg('Generating packages for %s on %s'  % (self.project, self.workdir))
-                if self.build_system == 'rpm':
-                    self.rpm()
-                    self.upload_rpm()
+                    elif self.build_system == 'deb':
+                        self.deb(branch)
+                        self.upload_to(branch)
+                    log.msg("build complete")
 
-                elif self.build_system == 'deb':
-                    self.deb()
-                    self.upload_to()
-                log.msg("build complete")
-
-            #self.git.checkout_tag('master') 
-        
+                #self.git.checkout_tag('master') 
+            
         except Exception, e:
             log.err()
             log.err("build failed: %s" % repr(e))
@@ -280,10 +285,12 @@ class Builder:
 
             ftp.quit()
 
-    def deb(self):
+    def deb(self, branch):
         templates = {}
         templates_dir = os.path.join(self.templates_dir, 'deb')
         debian_dir = os.path.join(self.workdir, 'debian')
+        control_data_original = None
+        control_data_new = None
         
         if self.project.install_prefix is None:
             self.project.install_prefix = 'opt'
@@ -322,22 +329,46 @@ class Builder:
             for filename, data in templates.iteritems():
                 open(os.path.join(debian_dir, filename), 'w').write(data)
         
-        if self.project.branch == 'stable':
-            if self.project.last_tag.startswith(self.project.branch):
-                self.project.version = self.project.last_tag.split('_')[1]
+        changelog_entry = """%(name)s (%(version)s) %(branch)s; urgency=low
 
-            dch_cmd = self._exec(
-                ['dch', '-b', '--newversion', self.project.version, '--force-distribution', '-D', 'stable', '\'*latest commits\''], 
-                cwd=self.workdir
-            )
-            dch_cmd.wait()
+  * Latest commits
+  %(commits)s
+
+ -- %(username)s <%(email)s>  %(date)s
+"""
+        changelog_data = {
+                'name': self.project.name,
+                'version': self.project.version,
+                'branch': branch,
+                'commits': '  '.join(self.git.log()),
+                'username': self.project.username,
+                'email': self.project.email,
+                'date': time.strftime("%a, %d %h %Y %T %z"),
+            }
+
+
+        if branch in ('stable'):
+            """
+            if the branch has stable in its name, we should use the version of this tag as a project version
+            """
+            if self.project.last_tag(branch) != None and self.project.last_tag(branch).startswith(branch):
+                self.project.version = self.project.last_tag(branch).split('_')[1]
+
+            changelog_data.update({'version': self.project.version, 'branch': branch})
         else:
-            dch_cmd = self._exec(['dch', '--no-auto-nmu', '-i', 'latest commits'], cwd=self.workdir)
-            dch_cmd.wait()
-        
-        for git_log in self.git.log():
-            append_log = self._exec(['dch', '-a', git_log], cwd=self.workdir)
-            append_log.wait()
+            """
+            otherwise it should change the package name to something that can differ from the stable version
+            like appending -branch to the package name by changing its control file
+            """
+            control = os.path.join(self.workdir, 'debian', 'control')
+            if os.path.isfile(control):
+                control_data_original = open(control).read()
+                control_data_new = control_data_original.replace(self.project.name, "%s-%s" % (self.project.name, branch))
+                open(control, 'w').write(control_data_new)
+
+            changelog_data.update({'name': "%s-%s" % (self.project.name, branch), 'branch': 'testing'})
+
+        open(os.path.join(self.workdir, 'debian', 'changelog'), 'w').write(changelog_entry % changelog_data)
         
         self.project.version = open(os.path.join(self.workdir, 'debian/changelog'), 'r').readline().split('(')[1].split(')')[0]
         self.project.save()
@@ -386,14 +417,19 @@ class Builder:
         
         dpkg_cmd.wait()
 
+        control = os.path.join(self.workdir, 'debian', 'control')
+        if os.path.isfile(control) and control_data_original:
+            open(control, 'w').write(control_data_original)
+
         clean_cmd = self._exec(['dh', 'clean'], cwd=self.workdir)
         clean_cmd.wait()
 
-    def upload_to(self):
-        changes_file = glob.glob('%s/%s_%s_*.changes' % (self.workspace,self.project.name,self.project.version))[0]
-        if self.project.branch == 'stable':
-            upload_cmd = self._exec(['dput', self.project.branch, changes_file])
+    def upload_to(self, branch):
+        if branch == 'stable':
+            changes_file = glob.glob('%s/%s_%s_*.changes' % (self.workspace, self.project.name, self.project.version))[0]
+            upload_cmd = self._exec(['dput', branch, changes_file])
         else:
+            changes_file = glob.glob('%s/%s-%s_%s_*.changes' % (self.workspace, self.project.name, branch, self.project.version))[0]
             upload_cmd = self._exec(['dput',  changes_file])
         upload_cmd.wait()
 

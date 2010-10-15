@@ -43,23 +43,26 @@ class Git(object):
         branches_dir = os.path.join(self.workdir, '.git', 'refs', 'heads')
         return os.listdir(branches_dir)
 
-    def last_commit(self):
-        branch = 'master'
-        if self.project.branch:
-            branch = self.project.branch
-        return open(os.path.join(self.workdir, '.git', 'refs', 'heads', self.project.branch)).read()
+    def last_commit(self, branch='master'):
+        return open(os.path.join(self.workdir, '.git', 'refs', 'heads', branch)).read()
 
-    def tags(self):
+    def tags(self, branch):
         try:
             tagdir = os.path.join(self.workdir, '.git', 'refs', 'tags')
             tags = os.listdir(tagdir)
-            if self.project.branch != 'master':
+            if branch != 'master':
                 branch_tags = []
                 for tag in tags:
-                    if tag.startswith(self.project.branch):
+                    if tag.startswith(branch):
                         branch_tags.append(tag)
-                tags = branch_tags
-            return tags
+                return branch_tags
+            else:
+                for project_branch in self.project.branches():
+                    for tag in tags:
+                        if tag.startswith(project_branch):
+                            tags.remove(tag)
+                return tags
+
         except Exception, e:
             log.err(repr(e))
             log.err()

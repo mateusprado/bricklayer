@@ -1,112 +1,99 @@
-import os
-import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), 'utils'))
-from threading import Lock
-from sqlalchemy import Column, Integer, String, create_engine
-from sqlalchemy.pool import SingletonThreadPool
-from sqlalchemy.orm import sessionmaker, scoped_session
-from sqlalchemy.ext.declarative import declarative_base
+import redis
+from twisted.internet import defer
+from twisted.internet import reactor
+from twisted.internet import protocol
 
-from config import BrickConfig
+class Projects:
 
-Base = declarative_base()
-
-_session_lock = Lock()
-
-def synchronized(lock):
-    def wrapper(func):
-        def locked(*args, **kargs):
-            try:
-                lock.acquire()
-                try:
-                    return func(*args, **kargs)
-                except Exception, e:
-                    raise
-            finally:
-                lock.release()
-
-        return locked
-            
-    return wrapper
-
-class Session:
-
-    _engine = None
-    _session_maker = scoped_session(sessionmaker())
-
-    def __init__(self):
-        self._engine = create_engine(BrickConfig().get('databases', 'uri'), 
-                                     poolclass=SingletonThreadPool)
-        self._session_maker.configure(bind=self._engine)
-        self._session = self._session_maker()
-
-    def get(self):
-        return self._session
-
-    @classmethod
-    def get_engine(self):
-        return self._engine
-
-
-class Projects(Base):
-    __tablename__ = 'projects'
-
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
-    git_url = Column(String)
-    build_cmd = Column(String)
-    install_cmd = Column(String)
-    install_prefix = Column(String)
-    last_tag = Column(Integer)
-    last_commit = Column(String)
-    username = Column(String)
-    email = Column(String)
-    repository_url = Column(String)
-    version = Column(String)
-    release = Column(String)
-    branch = Column(String, default='master')
-
-    def __init__(self, name='', git_url='', install_cmd='', version=''):
+    def __init__(self, name='', git_url='', install_cmd='', build_cmd='', version='', release=''):
         self.name = name
         self.git_url = git_url
         self.install_cmd = install_cmd
+        self.build_cmd = build_cmd
         self.version = version
+        self.release = release
         self.email = 'bricklayer@locaweb.com.br'
         self.username = 'Bricklayer Builder'
+        self.install_prefix = ''
+        self.populate(self.name)
     
-    def __repr__(self):
-        return "<Project name='%s' id=%s>" % (self.name, self.id)
+    def connect(self):
+        return redis.Redis()
+
+    def __dir__(self):
+        return ['name', 'git_url', 'install_cmd', 'build_cmd', 'version', 'email', 'username', 'release']
     
-    @classmethod
-    @synchronized(_session_lock)
-    def get(self, name):
-        result = Session().get().query(Projects).filter_by(name=name)[0]
-        return result
+    def lock(self):
+        redis_cli = self.connect()
+        redis_cli.incr('lock:%s', self.name)
+        redis_cli.connection.disconnect()
+
+    def unlock(self):
+        redis_cli = self.connect()
+        redis_cli.incr('lock:%s', self.name)
+        redis_cli.connection.disconnect()
     
-    @classmethod
-    @synchronized(_session_lock)
-    def get_all(self):
-        for project in Session().get().query(Projects):
-            yield project
-        
-    @synchronized(_session_lock)
+    def locked(self):
+        redis_cli = self.connect()
+        res = redis_cli.get('lock:%s', self.name)
+        redis_cli.connection.disconnect()
+        if res > 0:
+            return True
+        else:
+            return False
+
     def save(self):
-        Session().get().add(self)
-        Session().get().commit()
+        redis_cli = self.connect()
+        data = {}
+        for attr in self.__dir__():
+            data[attr] = getattr(self, attr)
+        redis_cli.hmset("project:%s" % self.name, data)
+        self.populate(self.name)
+        redis_cli.connection.disconnect()
     
-    @synchronized(_session_lock)
-    def delete(self):
-        Session().get().delete(self)
-        Session().get().commit()
-
-    def create_table(self, engine):
-        print engine
-        self.metadata.create_all(engine)
+    def populate(self, name):
+        redis_cli = self.connect()
+        res = redis_cli.hgetall("project:%s" % name)
+        for key, val in res.iteritems():
+            key = key.replace('project:', '')
+            setattr(self, key, val)
     
-if __name__ == '__main__':
-    BrickConfig('/etc/bricklayer/bricklayer.ini')
+    def add_branch(self, branch):
+        redis_cli = self.connect()
+        redis_cli.rpush('branches:%s' % self.name, branch)
 
-    _engine = create_engine(BrickConfig().get('databases', 'uri'), 
-                                     poolclass=SingletonThreadPool)
-    projects_db = Projects()
-    projects_db.create_table(_engine)
+    def branches(self):
+        redis_cli = self.connect()
+        res = redis_cli.lrange('branches:%s' % self.name, 0, redis_cli.llen('branches:%s' % self.name) - 1)
+        if len(res) == 0:
+            res.append('master')
+        return res
+
+    def last_commit(self, branch, commit=''):
+        redis_cli = self.connect()
+        if commit == '':
+            res = redis_cli.get('branches:%s:%s:last_commit' % (self.name, branch))
+        else:
+            res = redis_cli.set('branches:%s:%s:last_commit' % (self.name, branch), commit)
+        return res
+
+    def last_tag(self, branch, tag=''):
+        redis_cli = self.connect()
+        if tag == '':
+            res = redis_cli.get('branches:%s:%s:last_tag' % (self.name, branch))
+        else:
+            res = redis_cli.set('branches:%s:%s:last_tag' % (self.name, branch), tag)
+        return res
+
+    @classmethod
+    def get_all(self):
+        connection_obj = Projects()
+        redis_cli = connection_obj.connect()
+        keys = redis_cli.keys('project:*')
+        projects = []
+        redis_cli.connection.disconnect()
+        for key in keys:
+            key = key.replace('project:', '')
+            projects.append(Projects(key)) 
+        return projects
+
