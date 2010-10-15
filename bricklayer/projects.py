@@ -23,6 +23,25 @@ class Projects:
     def __dir__(self):
         return ['name', 'git_url', 'install_cmd', 'build_cmd', 'version', 'email', 'username', 'release']
     
+    def lock(self):
+        redis_cli = self.connect()
+        redis_cli.incr('lock:%s', self.name)
+        redis_cli.connection.disconnect()
+
+    def unlock(self):
+        redis_cli = self.connect()
+        redis_cli.incr('lock:%s', self.name)
+        redis_cli.connection.disconnect()
+    
+    def locked(self):
+        redis_cli = self.connect()
+        res = redis_cli.get('lock:%s', self.name)
+        redis_cli.connection.disconnect()
+        if res > 0:
+            return True
+        else:
+            return False
+
     def save(self):
         redis_cli = self.connect()
         data = {}

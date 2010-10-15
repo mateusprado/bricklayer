@@ -11,6 +11,10 @@ import cyclone.escape
 from twisted.internet import reactor
 from twisted.python import log
 
+def forceBuild(project_name, branch='master'):
+    builder = Builder(project_name)
+    builder.build_project(force=True, a_branch=branch)
+
 class Project(cyclone.web.RequestHandler):
     def post(self, *args):
         try:
@@ -23,11 +27,11 @@ class Project(cyclone.web.RequestHandler):
             project.git_url = self.get_argument('git_url')[0]
             for name, parm in self.request.arguments.iteritems():
                 setattr(project, str(name), parm[0])
-
             try:
+                project.add_branch(self.get_argument('branch'))
                 project.save()
                 log.msg('Project created:', project.name)
-                reactor.callInThread(self.forceBuild, project.name)
+                reactor.callInThread(forceBuild, project.name)
             except Exception, e:
                 log.err()
                 self.write(cyclone.escape.json_encode({'status': "fail"}))
@@ -46,7 +50,7 @@ class Project(cyclone.web.RequestHandler):
         except Exception, e:
             log.err(e)
             self.finish(cyclone.escape.json_encode({'status': 'fail'}))
-        reactor.callInThread(self.forceBuild, project.name)
+        reactor.callInThread(forceBuild, project.name)
     
     def get(self, name):
         try:
@@ -67,9 +71,6 @@ class Project(cyclone.web.RequestHandler):
         except Exception, e:
             log.err(e)
 
-    def forceBuild(self, project_name):
-        builder = Builder(project_name)
-        builder.build_project(force=True)
 
 class Branch(cyclone.web.RequestHandler):
     def get(self, project_name):
@@ -78,9 +79,14 @@ class Branch(cyclone.web.RequestHandler):
         self.write(cyclone.escape.json_encode({'branches': branches}))
 
     def post(self, project_name):
+        branch = self.get_argument('branch')
         project = Projects(project_name)
-        project.add_branch(self.get_argument('branch'))
-        self.write(cyclone.escape.json_encode({'status': 'ok'}))
+        if branch in project.branches():
+            self.write(cyclone.escape.json_encode({'status': 'failed: branch already exist'}))
+        else:
+            project.add_branch(branch)
+            forceBuild(project.name, branch)
+            self.write(cyclone.escape.json_encode({'status': 'ok'}))
 
 restApp = cyclone.web.Application([
     (r'/project', Project),

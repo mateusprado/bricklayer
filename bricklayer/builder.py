@@ -58,20 +58,21 @@ class Builder:
             new_file.write(match.sub('\n', line))
         new_file.close()
 
-    def build_project(self, force=False):
+    def build_project(self, force=False, a_branch=None):
         try:
             if force:
                 build = 1
             else:
                 build = 0
-
-            branches = self.project.branches()
+            if a_branch:
+                branches = [a_branch]
+            else:
+                branches = self.project.branches()
             for branch in branches:
 
                 log.msg("Checking project: %s" % self.project.name)
                 try:
                     if os.path.isdir(self.git.workdir):
-                        #if branch != 'master':
                         self.git.checkout_branch(branch)
                         self.git.pull()
                     else:
@@ -288,6 +289,8 @@ class Builder:
         templates = {}
         templates_dir = os.path.join(self.templates_dir, 'deb')
         debian_dir = os.path.join(self.workdir, 'debian')
+        control_data_original = None
+        control_data_new = None
         
         if self.project.install_prefix is None:
             self.project.install_prefix = 'opt'
@@ -344,11 +347,11 @@ class Builder:
             }
 
 
-        if branch == 'stable':
+        if branch in ('stable'):
             """
             if the branch has stable in its name, we should use the version of this tag as a project version
             """
-            if self.project.last_tag(branch).startswith(branch):
+            if self.project.last_tag(branch) != None and self.project.last_tag(branch).startswith(branch):
                 self.project.version = self.project.last_tag(branch).split('_')[1]
 
             changelog_data.update({'version': self.project.version, 'branch': branch})
@@ -359,15 +362,13 @@ class Builder:
             """
             control = os.path.join(self.workdir, 'debian', 'control')
             if os.path.isfile(control):
-                control_data = open(control).read()
-                control_data.replace(self.project.name, "%s-%s" % (self.project.name, branch))
+                control_data_original = open(control).read()
+                control_data_new = control_data_original.replace(self.project.name, "%s-%s" % (self.project.name, branch))
+                open(control, 'w').write(control_data_new)
+
             changelog_data.update({'name': "%s-%s" % (self.project.name, branch), 'branch': 'testing'})
-        
+
         open(os.path.join(self.workdir, 'debian', 'changelog'), 'w').write(changelog_entry % changelog_data)
-        
-        for git_log in self.git.log():
-            append_log = self._exec(['dch', '-a', git_log], cwd=self.workdir)
-            append_log.wait()
         
         self.project.version = open(os.path.join(self.workdir, 'debian/changelog'), 'r').readline().split('(')[1].split(')')[0]
         self.project.save()
@@ -416,8 +417,9 @@ class Builder:
         
         dpkg_cmd.wait()
 
-        if os.path.isfile(control + '.save'):
-            shutil.move(control, control.replace('.save', ''))
+        control = os.path.join(self.workdir, 'debian', 'control')
+        if os.path.isfile(control) and control_data_original:
+            open(control, 'w').write(control_data_original)
 
         clean_cmd = self._exec(['dh', 'clean'], cwd=self.workdir)
         clean_cmd.wait()
