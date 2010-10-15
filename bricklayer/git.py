@@ -57,7 +57,12 @@ class Git(object):
                         branch_tags.append(tag)
                 return branch_tags
             else:
+                for project_branch in self.project.branches():
+                    for tag in tags:
+                        if tag.startswith(project_branch):
+                            tags.remove(tag)
                 return tags
+
         except Exception, e:
             log.err(repr(e))
             log.err()
