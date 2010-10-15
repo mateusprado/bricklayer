@@ -8,6 +8,6 @@ Homepage: http://github.com/locaweb/bricklayer
 
 Package: bricklayer
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, redis-server (>= 2)
 Description: Builds packages based on git tags or commits
  Bricklayer is a twisted application which watches your repository and builds debian packages for any change in tags or commits
