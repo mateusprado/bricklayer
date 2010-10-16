@@ -51,7 +51,7 @@ class BricklayerFactory(protocol.ServerFactory):
         builder.build_project(force=force)
     
     def sched_builder(self):
-        dreque = Dreque('127.0.0.1')
+        #dreque = Dreque('127.0.0.1')
         for project in Projects.get_all():
             log.msg('sched project: %s' % project.name)
             #dreque.enqueue('build', self.build_project, argument=project.name)
