@@ -128,7 +128,11 @@ class Builder:
             if not os.path.isdir(os.path.join(rpm_dir, dir)):
                 os.makedirs(os.path.join(rpm_dir, dir))
         
-        build_dir = os.path.join(self.workspace, 'rpm', 'TMP')
+        build_dir = os.path.join(rpm_dir, 'TMP', self.project.name)
+        
+        if not os.path.isdir(build_dir):
+            os.makedirs(build_dir)
+
         source_file = os.path.join(rpm_dir, 'SOURCES', '%s.tar.gz' % dir_prefix)
 
         cur_dir = os.getcwd()
