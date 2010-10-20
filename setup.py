@@ -21,7 +21,7 @@ setup(
     packages=find_packages(), 
     entry_points="""
     [console_scripts]
-    build_consumer = build_consumer:main
+    build_consumer = bricklayer.build_consumer:main
     """,
     data_files=data_files_list
 )

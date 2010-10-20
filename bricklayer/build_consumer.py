@@ -7,7 +7,7 @@ from bricklayer import builder
 from bricklayer.config import BrickConfig
 from dreque import DrequeWorker
 
-if __name__ == "__main__":
+def main():
     config_file = '/etc/bricklayer/bricklayer.ini'
     if os.environ.has_key('BRICKLAYERCONFIG'):
         config_file = os.environ['BRICKLAYERCONFIG']
@@ -15,3 +15,6 @@ if __name__ == "__main__":
     
     worker = DrequeWorker(['build'], '127.0.0.1')
     worker.work()
+
+if __name__ == "__main__":
+    main()
