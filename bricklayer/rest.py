@@ -41,23 +41,19 @@ class Project(cyclone.web.RequestHandler):
             self.write(cyclone.escape.json_encode({'status':  "Project already exists"}))
 
     def put(self, name):
-        branch = None
+        branch = 'master'
         project = Projects(name)
-        if not self.request.arguments.has_key('build'):
-            for name, arg in self.request.arguments.iteritems():
-                if name in ('branch'):
-                    branch = arg
-                else:
-                    setattr(project, name, arg[0])
-            try:
-                project.save()
-                self.finish(cyclone.escape.json_encode({'status': 'build scheduled'}))
-            except Exception, e:
-                log.err(e)
-                self.finish(cyclone.escape.json_encode({'status': 'fail'}))
-        else:
-            branch = self.get_argument('build')
-        #reactor.callInThread(forceBuild, project.name)
+        for name, arg in self.request.arguments.iteritems():
+            if name in ('branch'):
+                branch = arg
+            else:
+                setattr(project, name, arg[0])
+        try:
+            project.save()
+            self.finish(cyclone.escape.json_encode({'status': 'build scheduled'}))
+        except Exception, e:
+            log.err(e)
+            self.finish(cyclone.escape.json_encode({'status': 'fail'}))
         reactor.callInThread(_dreque.enqueue, 'build', 'builder.build_project', project.name, branch, True)
     
     def get(self, name, branch='master'):
@@ -97,9 +93,18 @@ class Branch(cyclone.web.RequestHandler):
             reactor.callInThread(_dreque.enqueue, 'build', 'builder.build_project', project.name, branch, True)
             self.write(cyclone.escape.json_encode({'status': 'ok'}))
 
+class Build(cyclone.web.RequestHandler):
+    def post(self, project_name):
+        project = Projects(project_name)
+        branch = self.get_argument('branch')
+        reactor.callInThread(_dreque.enqueue, 'build', 'builder.build_project', project.name, branch, True)
+        self.write(cyclone.escape.json_encode({'status': 'build of branch %s scheduled' % branch}))
+
+
 restApp = cyclone.web.Application([
     (r'/project', Project),
     (r'/project/(.*)', Project),
     (r'/branch/(.*)', Branch),
+    (r'/build/(.*)', Build),
 ])
 

@@ -36,7 +36,7 @@ class Git(object):
         new_workdir = self.workdir + "-%s" % branch
         if not os.path.isdir(new_workdir):
             shutil.copytree(self.workdir, new_workdir)
-            self.workdir = new_workdir
+        self.workdir = new_workdir
 
         if branch in self.branches():
             git_cmd = self._exec_git(['git', 'checkout', branch], cwd=self.workdir)
