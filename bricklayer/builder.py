@@ -17,6 +17,18 @@ import git
 from config import BrickConfig
 from projects import Projects
 from twisted.python import log
+from dreque import DrequeWorker
+
+def build_project(project, branch, force):
+    print project, branch, force
+    config_file = '/etc/bricklayer/bricklayer.ini'
+    
+    if os.environ.has_key('BRICKLAYERCONFIG'):
+        config_file = os.environ['BRICKLAYERCONFIG']
+    BrickConfig(config_file)
+
+    builder = Builder(project)
+    builder.build_project(force, branch)
 
 class Builder:
     def __init__(self, project):
@@ -68,6 +80,7 @@ class Builder:
                 branches = [a_branch]
             else:
                 branches = self.project.branches()
+
             for branch in branches:
 
                 log.msg("Checking project: %s" % self.project.name)
@@ -122,7 +135,7 @@ class Builder:
         rpm_dir = os.path.join(self.workspace, 'rpm')
         templates_dir = os.path.join(self.templates_dir, 'rpm')
         spec_filename = os.path.join(rpm_dir, 'SPECS', "%s.spec" % self.project.name)
-        dir_prefix = "%s-%s" % (self.project.name, self.project.version)
+        dir_prefix = "%s-%s" % (self.project.name, self.project.version())
 
         for dir in ('SOURCES', 'SPECS', 'RPMS', 'SRPMS', 'BUILD', 'TMP'):
             if not os.path.isdir(os.path.join(rpm_dir, dir)):
@@ -166,7 +179,7 @@ class Builder:
 
         template_data = {
                 'name': self.project.name,
-                'version': "%s" % (self.project.version),
+                'version': "%s" % (self.project.version()),
                 'release': "%s" % (self.project.release),
                 'build_dir': build_dir,
                 'build_cmd': self.project.build_cmd,
@@ -249,7 +262,7 @@ class Builder:
     def upload_rpm(self):
         if self.ftp_host:
             rpm_dir = os.path.join(self.workspace, 'rpm')
-            rpm_prefix = "%s-%s-%s" % (self.project.name, self.project.version, self.project.release)
+            rpm_prefix = "%s-%s-%s" % (self.project.name, self.project.version(), self.project.release)
             list = []
             for path, dirs, files in os.walk(rpm_dir):
                 if os.path.isdir(path):
@@ -291,7 +304,7 @@ class Builder:
         debian_dir = os.path.join(self.workdir, 'debian')
         control_data_original = None
         control_data_new = None
-        
+
         if self.project.install_prefix is None:
             self.project.install_prefix = 'opt'
 
@@ -303,7 +316,7 @@ class Builder:
 
         template_data = {
                 'name': self.project.name,
-                'version': "%s" % (self.project.version),
+                'version': "%s" % (self.project.version(branch)),
                 'build_cmd': self.project.build_cmd,
                 'install_cmd': self.mod_install_cmd,
                 'username': self.project.username,
@@ -338,7 +351,7 @@ class Builder:
 """
         changelog_data = {
                 'name': self.project.name,
-                'version': self.project.version,
+                'version': self.project.version(branch),
                 'branch': branch,
                 'commits': '  '.join(self.git.log()),
                 'username': self.project.username,
@@ -352,9 +365,9 @@ class Builder:
             if the branch has stable in its name, we should use the version of this tag as a project version
             """
             if self.project.last_tag(branch) != None and self.project.last_tag(branch).startswith(branch):
-                self.project.version = self.project.last_tag(branch).split('_')[1]
+                self.project.version(branch, self.project.last_tag(branch).split('_')[1])
 
-            changelog_data.update({'version': self.project.version, 'branch': branch})
+            changelog_data.update({'version': self.project.version(branch), 'branch': branch})
         else:
             """
             otherwise it should change the package name to something that can differ from the stable version
@@ -365,12 +378,17 @@ class Builder:
                 control_data_original = open(control).read()
                 control_data_new = control_data_original.replace(self.project.name, "%s-%s" % (self.project.name, branch))
                 open(control, 'w').write(control_data_new)
+            
+            if self.project.version(branch):
+                version_list = self.project.version(branch).split('.')
+                version_list[len(version_list) - 1] = str(int(version_list[len(version_list) - 1]) + 1)
+                self.project.version(branch, '.'.join(version_list))
 
-            changelog_data.update({'name': "%s-%s" % (self.project.name, branch), 'branch': 'testing'})
+            changelog_data.update({'version': self.project.version(branch), 'name': "%s-%s" % (self.project.name, branch), 'branch': 'testing'})
 
         open(os.path.join(self.workdir, 'debian', 'changelog'), 'w').write(changelog_entry % changelog_data)
         
-        self.project.version = open(os.path.join(self.workdir, 'debian/changelog'), 'r').readline().split('(')[1].split(')')[0]
+        self.project.version(branch, open(os.path.join(self.workdir, 'debian/changelog'), 'r').readline().split('(')[1].split(')')[0])
         self.project.save()
             
         rvm_env = {}
@@ -426,19 +444,25 @@ class Builder:
 
     def upload_to(self, branch):
         if branch == 'stable':
-            changes_file = glob.glob('%s/%s_%s_*.changes' % (self.workspace, self.project.name, self.project.version))[0]
+            print '%s/%s_%s_*.changes' % (self.workspace, self.project.name, self.project.version(branch))
+            changes_file = glob.glob('%s/%s_%s_*.changes' % (self.workspace, self.project.name, self.project.version(branch)))[0]
             upload_cmd = self._exec(['dput', branch, changes_file])
         else:
-            changes_file = glob.glob('%s/%s-%s_%s_*.changes' % (self.workspace, self.project.name, branch, self.project.version))[0]
+            print '%s/%s-%s_%s_*.changes' % (self.workspace, self.project.name, branch, self.project.version(branch))
+            changes_file = glob.glob('%s/%s-%s_%s_*.changes' % (self.workspace, self.project.name, branch, self.project.version(branch)))[0]
             upload_cmd = self._exec(['dput',  changes_file])
         upload_cmd.wait()
 
     def promote_to(self, version, release):
-        self.project.version = version
+        self.project.version(version=version)
         self.project.release = release
         self.project.save()
 
     def promote_deb(self):
-        self.git.create_tag("%s.%s" % (self.project.version, self.project.release))
-        dch_cmd = self._exec(['dch', '-r', '--no-force-save-on-release', '--newversion', '%s.%s' % (self.project.version, self.project.release)], cwd=self.workdir)
+        self.git.create_tag("%s.%s" % (self.project.version(), self.project.release))
+        dch_cmd = self._exec(['dch', '-r', '--no-force-save-on-release', '--newversion', '%s.%s' % (self.project.version(), self.project.release)], cwd=self.workdir)
         dch_cmd.wait()
+
+if __name__ == "__main__":
+    worker = DrequeWorker(['build'], '127.0.0.1')
+    worker.work()

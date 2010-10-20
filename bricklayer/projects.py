@@ -10,18 +10,25 @@ class Projects:
         self.git_url = git_url
         self.install_cmd = install_cmd
         self.build_cmd = build_cmd
-        self.version = version
+        if version:
+            self.version(version=version)
         self.release = release
         self.email = 'bricklayer@locaweb.com.br'
         self.username = 'Bricklayer Builder'
         self.install_prefix = ''
         self.populate(self.name)
     
+    def exists(self):
+        redis_cli = self.connect()
+        res = redis_cli.exists('project:%s' % self.name)
+        redis_cli.connection.disconnect()
+        return res
+
     def connect(self):
         return redis.Redis()
 
     def __dir__(self):
-        return ['name', 'git_url', 'install_cmd', 'build_cmd', 'version', 'email', 'username', 'release']
+        return ['name', 'git_url', 'install_cmd', 'build_cmd', 'email', 'username', 'release']
     
     def lock(self):
         redis_cli = self.connect()
@@ -57,10 +64,12 @@ class Projects:
         for key, val in res.iteritems():
             key = key.replace('project:', '')
             setattr(self, key, val)
+        redis_cli.connection.disconnect()
     
     def add_branch(self, branch):
         redis_cli = self.connect()
         redis_cli.rpush('branches:%s' % self.name, branch)
+        redis_cli.connection.disconnect()
 
     def branches(self):
         redis_cli = self.connect()
@@ -68,21 +77,33 @@ class Projects:
         if len(res) == 0:
             res.append('master')
         return res
+        redis_cli.connection.disconnect()
 
-    def last_commit(self, branch, commit=''):
+    def last_commit(self, branch='master', commit=''):
         redis_cli = self.connect()
         if commit == '':
             res = redis_cli.get('branches:%s:%s:last_commit' % (self.name, branch))
         else:
             res = redis_cli.set('branches:%s:%s:last_commit' % (self.name, branch), commit)
+        redis_cli.connection.disconnect()
         return res
 
-    def last_tag(self, branch, tag=''):
+    def last_tag(self, branch='master', tag=''):
         redis_cli = self.connect()
         if tag == '':
             res = redis_cli.get('branches:%s:%s:last_tag' % (self.name, branch))
         else:
             res = redis_cli.set('branches:%s:%s:last_tag' % (self.name, branch), tag)
+        redis_cli.connection.disconnect()
+        return res
+
+    def version(self, branch='master', version=''):
+        redis_cli = self.connect()
+        if version == '':
+            res = redis_cli.get('branch:%s:%s:version' % (self.name, branch))
+        else:
+            res = redis_cli.set('branch:%s:%s:version' % (self.name, branch), version)
+        redis_cli.connection.disconnect()
         return res
 
     @classmethod
