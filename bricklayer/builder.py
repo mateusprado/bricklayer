@@ -467,6 +467,3 @@ class Builder:
         dch_cmd = self._exec(['dch', '-r', '--no-force-save-on-release', '--newversion', '%s.%s' % (self.project.version(), self.project.release)], cwd=self.workdir)
         dch_cmd.wait()
 
-if __name__ == "__main__":
-    worker = DrequeWorker(['build'], '127.0.0.1')
-    worker.work()

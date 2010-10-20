@@ -2,8 +2,9 @@ import sys
 import os
 import bricklayer
 sys.path.append(os.path.join(os.path.dirname(bricklayer.__file__), 'utils'))
+sys.path.append(os.path.dirname(bricklayer.__file__))
 
-from bricklayer.builder import Builder
+from bricklayer.builder import Builder as builder
 from bricklayer.config import BrickConfig
 from dreque import DrequeWorker
 

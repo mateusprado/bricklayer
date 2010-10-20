@@ -36,7 +36,7 @@ case "$1" in
   start)
 	echo -n "Starting bricklayer"
 	start-stop-daemon --start --quiet --exec ${DAEMON} -- -y ${TACFILE} --rundir=${RUNDIR} --pidfile=${PIDFILE} --logfile=${LOGFILE}
-    start-stop-daemon --start --quiet --exec ${CONSUMER} 
+    start-stop-daemon --start --quiet --exec ${CONSUMER} -b 
 	echo "."	
 	;;
   stop)
