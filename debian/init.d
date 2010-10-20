@@ -20,6 +20,10 @@ PIDFILE=/var/run/bricklayer.pid
 TACFILE=/etc/bricklayer/bricklayer.tac
 LOGFILE=/var/log/bricklayer.log
 
+CONSUMER=/usr/bin/build_consumer
+CONSUMER_PIDFILE=/var/run/build_consumer.pid
+CONSUMER_LOGFILE=/var/log/build_consumer.log
+
 # Include bricklayer defaults if available
 if [ -r /etc/default/bricklayer ]; then
 	. /etc/default/bricklayer
@@ -32,11 +36,13 @@ case "$1" in
   start)
 	echo -n "Starting bricklayer"
 	start-stop-daemon --start --quiet --exec ${DAEMON} -- -y ${TACFILE} --rundir=${RUNDIR} --pidfile=${PIDFILE} --logfile=${LOGFILE}
+    start-stop-daemon --start --quiet --exec ${CONSUMER} --rundir=${RUNDIR} --pidfile=${CONSUMER_PIDFILE} --logfile=${CONSUMER_LOGFILE}
 	echo "."	
 	;;
   stop)
 	echo -n "Stopping bricklayer"
 	start-stop-daemon --stop --quiet --pidfile ${PIDFILE}
+	start-stop-daemon --stop --quiet --pidfile ${CONSUMER_PIDFILE}
 	echo "."
 	;;
   restart)

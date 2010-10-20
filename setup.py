@@ -19,5 +19,9 @@ setup(
     name='bricklayer',
     version='1.0',
     packages=find_packages(), 
+    entry_points="""
+    [console_scripts]
+    build_consumer = build_consumer:main
+    """,
     data_files=data_files_list
 )
