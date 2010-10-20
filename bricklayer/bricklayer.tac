@@ -10,7 +10,7 @@ sys.path.append(os.path.join(os.path.dirname(bricklayer.__file__), 'utils'))
 import pystache
 
 from twisted.application import internet, service
-from twisted.internet import protocol, task, threads
+from twisted.internet import protocol, task, threads, reactor
 from twisted.protocols import basic
 from twisted.python import log
 
@@ -18,7 +18,7 @@ from builder import Builder
 from projects import Projects
 from config import BrickConfig
 from rest import restApp
-#from dreque import Dreque, DrequeWorker
+from dreque import Dreque, DrequeWorker
 
 class BricklayerProtocol(basic.LineReceiver):
     def lineReceived(self, line):
@@ -32,7 +32,7 @@ class BricklayerProtocol(basic.LineReceiver):
         if 'build' in command:
             project_name = arg
             self.transport.write("building %s\r\n" % project_name)
-            defered = threads.deferToThread(self.factory.buildProject, project_name, force=True)
+            defered = threads.deferToThread(self.factory.build_project, project_name, force=True)
             defered.addCallback(onResponse, onError)
     
     def connectionMade(self):
@@ -42,20 +42,20 @@ class BricklayerFactory(protocol.ServerFactory):
     protocol = BricklayerProtocol
 
     def __init__(self):
-        #worker = DrequeWorker(['build'], '127.0.0.1')
         self.sched_projects()
-        #worker.work()
 
     def build_project(self, project_name, force=False):
         builder = Builder(project_name)
         builder.build_project(force=force)
     
+    def send_job(self, project_name):
+        log.msg('sched project: %s' % project_name)
+        dreque = Dreque('127.0.0.1')
+        dreque.enqueue('build', 'builder.build_project', project_name, None, False)
+
     def sched_builder(self):
-        #dreque = Dreque('127.0.0.1')
         for project in Projects.get_all():
-            log.msg('sched project: %s' % project.name)
-            #dreque.enqueue('build', self.build_project, argument=project.name)
-            d = threads.deferToThread(self.build_project, project.name)
+            d = threads.deferToThread(self.send_job, project.name)
 
     def sched_projects(self):
         sched_task = task.LoopingCall(self.sched_builder)

@@ -1,6 +1,7 @@
 import os 
 import subprocess
 import re
+import shutil
 from twisted.python import log
 from config import BrickConfig
 
@@ -32,6 +33,11 @@ class Git(object):
         git_cmd.wait()
     
     def checkout_branch(self, branch=''):
+        new_workdir = self.workdir + "-%s" % branch
+        if not os.path.isdir(new_workdir):
+            shutil.copytree(self.workdir, new_workdir)
+        self.workdir = new_workdir
+
         if branch in self.branches():
             git_cmd = self._exec_git(['git', 'checkout', branch], cwd=self.workdir)
             git_cmd.wait()
