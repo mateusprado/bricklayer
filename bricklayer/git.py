@@ -19,10 +19,12 @@ class Git(object):
             stdout = open('/dev/null', 'w')
         return subprocess.Popen(cmd, cwd=cwd, stdout=stdout)
 
-    def clone(self):
+    def clone(self, branch):
         log.msg("Git clone %s" % self.project.git_url)
         git_cmd = self._exec_git(['git', 'clone', self.project.git_url, self.workdir])
         git_cmd.wait()
+        if branch:
+            self.checkout_branch(branch)
     
     def pull(self):
         git_cmd = self._exec_git(['git', 'pull'], cwd=self.workdir)
@@ -32,11 +34,12 @@ class Git(object):
         git_cmd = self._exec_git(['git', 'checkout', tag], cwd=self.workdir)
         git_cmd.wait()
     
-    def checkout_branch(self, branch=''):
-        new_workdir = self.workdir + "-%s" % branch
-        if not os.path.isdir(new_workdir):
-            shutil.copytree(self.workdir, new_workdir)
-        self.workdir = new_workdir
+    def checkout_branch(self, branch):
+        if branch:
+            new_workdir = self.workdir + "-%s" % branch
+            if not os.path.isdir(new_workdir):
+                shutil.copytree(self.workdir, new_workdir)
+            self.workdir = new_workdir
 
         if branch in self.branches():
             git_cmd = self._exec_git(['git', 'checkout', branch], cwd=self.workdir)

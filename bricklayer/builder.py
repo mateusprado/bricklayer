@@ -18,6 +18,8 @@ from config import BrickConfig
 from projects import Projects
 from twisted.python import log
 from dreque import DrequeWorker
+import logging
+log = logging.getLogger('builder')
 
 def build_project(project, branch, force):
     print project, branch, force
@@ -34,9 +36,9 @@ class Builder:
     def __init__(self, project):
         self.workspace = BrickConfig().get('workspace', 'dir')
         self.project = Projects(project)
-        self.workdir = os.path.join(self.workspace, self.project.name) 
         self.templates_dir = BrickConfig().get('workspace', 'template_dir')
         self.git = git.Git(self.project)
+        self.workdir = self.git.workdir
         self.build_system = BrickConfig().get('build', 'system')
         self.ftp_host = BrickConfig().get('ftp', 'host')
         self.ftp_user = BrickConfig().get('ftp', 'user')
@@ -83,17 +85,19 @@ class Builder:
 
             for branch in branches:
 
-                log.msg("Checking project: %s" % self.project.name)
+                log.info("Checking project: %s" % self.project.name)
                 try:
                     if os.path.isdir(self.git.workdir):
                         self.git.checkout_branch(branch)
                         self.git.pull()
                     else:
-                        self.git.clone()
+                        self.git.clone(branch)
                 except Exception, e:
-                    log.err()
-                    log.err('Could not clone or update repository')
+                    log.error()
+                    log.error('Could not clone or update repository')
                     raise
+
+                self.workdir = self.git.workdir
 
                 if os.path.isdir(self.workdir):
                     os.chdir(self.workdir)
@@ -102,7 +106,7 @@ class Builder:
                 last_commit = self.git.last_commit(branch)
 
                 if len(tags) > 0:
-                    log.msg('Last tag found: %s' % max(tags))
+                    log.info('Last tag found: %s' % max(tags))
                     if self.project.last_tag(branch) != max(tags):
                         self.project.last_tag(branch, max(tags))
                         self.git.checkout_tag(self.project.last_tag(branch))
@@ -115,7 +119,7 @@ class Builder:
                 self.project.save()
 
                 if build == 1:
-                    log.msg('Generating packages for %s on %s'  % (self.project, self.workdir))
+                    log.info('Generating packages for %s on %s'  % (self.project, self.workdir))
                     if self.build_system == 'rpm':
                         self.rpm()
                         self.upload_rpm()
@@ -123,13 +127,13 @@ class Builder:
                     elif self.build_system == 'deb':
                         self.deb(branch)
                         self.upload_to(branch)
-                    log.msg("build complete")
+                    log.info("build complete")
 
                 #self.git.checkout_tag('master') 
             
         except Exception, e:
-            log.err()
-            log.err("build failed: %s" % repr(e))
+            log.error()
+            log.error("build failed: %s" % repr(e))
 
     def rpm(self):
         rpm_dir = os.path.join(self.workspace, 'rpm')
@@ -207,7 +211,7 @@ class Builder:
         
         if has_rvm:
             rvmexec = open(rvm_rc).read()
-            log.msg("RVMRC: %s" % rvmexec)
+            log.info("RVMRC: %s" % rvmexec)
 
             # Fix to rvm users that cannot read the f* manual
             # for this i need to fix their stupid .rvmrc
@@ -235,7 +239,7 @@ class Builder:
                 if param.find('PROXY') != -1:
                     rvm_env[param] = os.environ[param]
 
-        log.msg(rvm_env)
+        log.info(rvm_env)
 
         if os.path.isfile(os.path.join(self.workdir, 'rpm', "%s.spec" % self.project.name)):            
             self.dos2unix(os.path.join(self.workdir, 'rpm', "%s.spec" % self.project.name))
@@ -275,7 +279,7 @@ class Builder:
                             if os.path.isfile(file) and file.find(rpm_prefix) != -1:
                                 list.append(file)
                         except Exception, e:
-                            log.err(e)
+                            log.error(e)
 
             ftp = ftplib.FTP()
             try:
@@ -287,7 +291,7 @@ class Builder:
                 if self.ftp_dir:
                     ftp.cwd(self.ftp_dir)
             except ftplib.error_reply, e:
-                log.err('Cannot conect to ftp server %s' % e)
+                log.error('Cannot conect to ftp server %s' % e)
 
             for file in list:
                 filename = os.path.basename(file)
@@ -296,9 +300,9 @@ class Builder:
                         f = open(file, 'rb')
                         ftp.storbinary('STOR %s' % filename, f)
                         f.close()
-                        log.msg("File %s has been successfully sent to ftp server %s" % (filename, self.ftp_host))
+                        log.info("File %s has been successfully sent to ftp server %s" % (filename, self.ftp_host))
                 except ftplib.error_reply, e:
-                    log.err(e)
+                    log.error(e)
 
             ftp.quit()
 
@@ -337,11 +341,7 @@ class Builder:
 
             map(read_file_data, ['changelog', 'control', 'rules'])
             
-            os.makedirs(
-                    os.path.join(
-                        debian_dir, self.project.name, self.project.install_prefix
-                        )
-                    )
+            os.makedirs( os.path.join( debian_dir, self.project.name, self.project.install_prefix))
 
             for filename, data in templates.iteritems():
                 open(os.path.join(debian_dir, filename), 'w').write(data)
@@ -408,7 +408,7 @@ class Builder:
         
         if has_rvm:
             rvmexec = open(rvm_rc).read()
-            log.msg("RVMRC: %s" % rvmexec)
+            log.info("RVMRC: %s" % rvmexec)
             
             # I need the output not to log on file
             rvm_cmd = subprocess.Popen('/usr/local/bin/rvm info %s' % rvmexec.split()[1],
@@ -419,7 +419,7 @@ class Builder:
                     name, value = line.split()
                     rvm_env[name.strip(':')] = value.strip('"')
             rvm_env['HOME'] = os.environ['HOME']
-            log.msg(rvm_env)
+            log.info(rvm_env)
 
         if len(rvm_env.keys()) < 1:
             rvm_env = os.environ
