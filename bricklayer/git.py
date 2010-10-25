@@ -49,14 +49,19 @@ class Git(object):
     def last_commit(self, branch='master'):
         return open(os.path.join(self.workdir, '.git', 'refs', 'heads', branch)).read()
 
-    def tags(self):
+    def tags(self, tag_type):
         try:
             git_cmd = self._exec_git(['git', 'tag', '-l'], stdout=subprocess.PIPE, cwd=self.workdir)
             git_cmd.wait()
             tags = git_cmd.stdout.readlines()
             result = []
-            for t in tags:
-                result.append(t.strip('\n'))
+            if tag_type:
+                for t in tags:
+                    if t.startswith(tag_type):
+                        result.append(t.strip('\n'))
+            else:
+                for t in tags:
+                    result.append(t.strip('\n'))
             return result
 
         except Exception, e:

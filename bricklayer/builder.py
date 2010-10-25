@@ -21,13 +21,8 @@ import logging
 from rpm_builder import RpmBuilder
 from deb_builder import DebBuilder
 
-class NullHandler(logging.Handler):
-    def emit(self, record):
-        pass
-nh = NullHandler()
-logging.getLogger('builder').addHandler(nh)
-log = logging
-log.level = logging.DEBUG
+log = logging.getLogger('builder')
+log.setLevel(logging.DEBUG)
 
 def build_project(project, branch, force):
     log.debug("> %s %s %s" % (project, branch, force))
@@ -132,20 +127,25 @@ class Builder:
                 self.git.workdir = self.workdir
             
             self.git.checkout_branch('master')
+            
+            
             """
-            When a stable_x.x.x tag is found it is treated as a stable build
-            thus special handling is needed, master is used as 'branch' 
+            When a stable_x.x.x or testing_x.x.x tag is found it is treated as a stable and testing build
+            respectively thus special handling is needed, master is used as 'branch' 
             when uploading stable should be passed in order to match the correct filename
             """
+
             branch = 'master'
-            tags = self.git.tags()
-            if len(tags) > 0:
-                log.info('Last tag found: %s' % max(tags))
-                if self.project.last_tag() != max(tags):
-                    self.project.last_tag(max(tags))
-                    self.git.checkout_tag(self.project.last_tag())
-                    self.package_builder.build(branch, self.project.last_tag())
-                    self.package_builder.upload('stable')
+            for tag_type in ('testing', 'stable'):
+                tags = self.git.tags(tag_type)
+                if len(tags) > 0:
+                    log.info('Last tag found: %s' % max(tags))
+                    if self.project.last_tag(tag_type=tag_type) != max(tags):
+                        self.project.last_tag(tag=max(tags), tag_type=tag_type)
+                        self.git.checkout_tag(self.project.last_tag(tag_type=tag_type))
+                        self.package_builder.build(branch, self.project.last_tag(tag_type=tag_type))
+                        self.package_builder.upload(tag_type)
+                        self.git.checkout_branch(branch)
 
 
         except Exception, e:

@@ -94,12 +94,12 @@ class Projects:
         redis_cli.connection.disconnect()
         return res
 
-    def last_tag(self, tag=''):
+    def last_tag(self, tag='', tag_type=''):
         redis_cli = self.connect()
         if tag == '':
-            res = redis_cli.get('tags:%s:last_tag' % self.name)
+            res = redis_cli.get('tags:%s:%s:last_tag' % (self.name, tag_type))
         else:
-            res = redis_cli.set('tags:%s:last_tag' % self.name, tag)
+            res = redis_cli.set('tags:%s:%s:last_tag' % (self.name, tag_type), tag)
         redis_cli.connection.disconnect()
         return res
 

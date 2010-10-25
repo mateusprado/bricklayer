@@ -160,13 +160,14 @@ class DebBuilder():
 
     def upload(self, branch):
         if branch == 'stable':
-            print '%s/%s_%s_*.changes' % (self.builder.workspace, self.project.name, self.project.version(branch))
             changes_file = glob.glob('%s/%s_%s_*.changes' % (self.builder.workspace, self.project.name, self.project.version(branch)))[0]
             upload_cmd = self.builder._exec(['dput', branch, changes_file])
+        elif branch == 'testing':
+            changes_file = glob.glob('%s/%s_%s_*.changes' % (self.builder.workspace, self.project.name, self.project.version(branch)))[0]
+            upload_cmd = self.builder._exec(['dput', changes_file])
         else:
-            print '%s/%s-%s_%s_*.changes' % (self.builder.workspace, self.project.name, branch, self.project.version(branch))
             changes_file = glob.glob('%s/%s-%s_%s_*.changes' % (self.builder.workspace, self.project.name, branch, self.project.version(branch)))[0]
-            upload_cmd = self.builder._exec(['dput',  changes_file])
+            upload_cmd = self.builder._exec(['dput', changes_file])
         upload_cmd.wait()
 
     def promote_to(self, version, release):
