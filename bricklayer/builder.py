@@ -131,6 +131,7 @@ class Builder:
                 self.workdir = self.oldworkdir
                 self.git.workdir = self.workdir
             
+            self.git.checkout_branch('master')
             """
             When a stable_x.x.x tag is found it is treated as a stable build
             thus special handling is needed, master is used as 'branch' 

@@ -78,8 +78,12 @@ class DebBuilder():
 
         if last_tag != None and last_tag.startswith('stable'):
             self.project.version('stable', last_tag.split('_')[1])
-
             changelog_data.update({'version': self.project.version('stable'), 'branch': 'stable'})
+
+        elif last_tag != None and last_tag.startswith('testing'):
+            self.project.version('testing', last_tag.split('_')[1])
+            changelog_data.update({'version': self.project.version('testing'), 'branch': 'testing'})
+
         else:
             """
             otherwise it should change the package name to something that can differ from the stable version
