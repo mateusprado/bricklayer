@@ -11,20 +11,18 @@ class BrickConfig(object):
         print category, field
 
 from projects import Projects
+from config import BrickConfig
 
-def teardown():
-    _config_file = ConfigParser.ConfigParser()
-    _config_file.read(['config/bricklayer.ini'])
-    os.unlink(_config_file.get('databases', 'uri').split('/')[-1])
-   
+def setup():
+    BrickConfig('config/bricklayer.ini')
 
-
-class project_test:
+class ProjectsTest:
      
     def create_project_test(self):
-        p = Projects(name='test', git_url='git://localhost')
+        p = Projects()
+        p.name = 'test'
+        p.git_utl = "git://localhost/dummy"
         p.save()
-        assert_not_equal(None, p.id)
         assert_equal(len(list(Projects.get_all())), 1)
      
 

@@ -12,7 +12,6 @@ data_files_list = template_dir
 data_files_list.extend([
         ('/etc/bricklayer/', ['etc/bricklayer/bricklayer.ini',
             'etc/bricklayer/gpg.key', 'bricklayer/bricklayer.tac']),
-        ('/var/lib/bricklayer/', ['db/bricklayer.db']),
     ]
 )
 setup(

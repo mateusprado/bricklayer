@@ -93,13 +93,18 @@ class Branch(cyclone.web.RequestHandler):
             reactor.callInThread(_dreque.enqueue, 'build', 'builder.build_project', project.name, branch, True)
             self.write(cyclone.escape.json_encode({'status': 'ok'}))
 
+    def delete(self, project_name):
+        project = Projects(project_name)
+        branch = self.get_argument('branch')
+        project.remove_branch(branch)
+        self.write(cyclone.escape.json_encode({'status': 'ok'}))
+
 class Build(cyclone.web.RequestHandler):
     def post(self, project_name):
         project = Projects(project_name)
         branch = self.get_argument('branch')
         reactor.callInThread(_dreque.enqueue, 'build', 'builder.build_project', project.name, branch, True)
         self.write(cyclone.escape.json_encode({'status': 'build of branch %s scheduled' % branch}))
-
 
 restApp = cyclone.web.Application([
     (r'/project', Project),

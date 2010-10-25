@@ -2,3 +2,4 @@ recursive-include etc bricklayer.ini gpg.key
 recursive-include bricklayer bricklayer.tac
 recursive-include db bricklayer.db
 recursive-include pkg_template *
+recursive-include bricklayer/utils *

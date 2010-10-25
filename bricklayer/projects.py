@@ -70,6 +70,12 @@ class Projects:
         redis_cli = self.connect()
         redis_cli.rpush('branches:%s' % self.name, branch)
         redis_cli.connection.disconnect()
+     
+    def remove_branch(self, branch):
+        redis_cli = self.connect()
+        index = redis_cli.lindex('branches:%s' % self.name, branch)
+        redis_cli.lrem('branches:%s' % self.name, index)
+        redis_cli.connection.disconnect()
 
     def branches(self):
         redis_cli = self.connect()
@@ -88,12 +94,12 @@ class Projects:
         redis_cli.connection.disconnect()
         return res
 
-    def last_tag(self, branch='master', tag=''):
+    def last_tag(self, tag=''):
         redis_cli = self.connect()
         if tag == '':
-            res = redis_cli.get('branches:%s:%s:last_tag' % (self.name, branch))
+            res = redis_cli.get('tags:%s:last_tag' % self.name)
         else:
-            res = redis_cli.set('branches:%s:%s:last_tag' % (self.name, branch), tag)
+            res = redis_cli.set('tags:%s:last_tag' % self.name, tag)
         redis_cli.connection.disconnect()
         return res
 

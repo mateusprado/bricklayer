@@ -2,7 +2,7 @@ import os
 import subprocess
 import re
 import shutil
-from twisted.python import log
+import logging as log
 from config import BrickConfig
 
 class Git(object):
@@ -20,7 +20,7 @@ class Git(object):
         return subprocess.Popen(cmd, cwd=cwd, stdout=stdout)
 
     def clone(self, branch):
-        log.msg("Git clone %s" % self.project.git_url)
+        log.info("Git clone %s" % self.project.git_url)
         git_cmd = self._exec_git(['git', 'clone', self.project.git_url, self.workdir])
         git_cmd.wait()
         if branch:
@@ -35,12 +35,6 @@ class Git(object):
         git_cmd.wait()
     
     def checkout_branch(self, branch):
-        if branch:
-            new_workdir = self.workdir + "-%s" % branch
-            if not os.path.isdir(new_workdir):
-                shutil.copytree(self.workdir, new_workdir)
-            self.workdir = new_workdir
-
         if branch in self.branches():
             git_cmd = self._exec_git(['git', 'checkout', branch], cwd=self.workdir)
             git_cmd.wait()
@@ -55,26 +49,18 @@ class Git(object):
     def last_commit(self, branch='master'):
         return open(os.path.join(self.workdir, '.git', 'refs', 'heads', branch)).read()
 
-    def tags(self, branch):
+    def tags(self):
         try:
-            tagdir = os.path.join(self.workdir, '.git', 'refs', 'tags')
-            tags = os.listdir(tagdir)
-            if branch != 'master':
-                branch_tags = []
-                for tag in tags:
-                    if tag.startswith(branch):
-                        branch_tags.append(tag)
-                return branch_tags
-            else:
-                for project_branch in self.project.branches():
-                    for tag in tags:
-                        if tag.startswith(project_branch):
-                            tags.remove(tag)
-                return tags
+            git_cmd = self._exec_git(['git', 'tag', '-l'], stdout=subprocess.PIPE, cwd=self.workdir)
+            git_cmd.wait()
+            tags = git_cmd.stdout.readlines()
+            result = []
+            for t in tags:
+                result.append(t.strip('\n'))
+            return result
 
         except Exception, e:
-            log.err(repr(e))
-            log.err()
+            log.exception(repr(e))
             return []
 
     def create_tag(self, tag=''):
