@@ -6,6 +6,7 @@ import ConfigParser
 import shutil
 
 sys.path.append(os.path.join(os.path.dirname(__file__), 'utils'))
+sys.path.append(os.path.dirname(__file__))
 
 import pystache
 import git
