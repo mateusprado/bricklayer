@@ -104,9 +104,6 @@ class DebBuilder():
 
         open(os.path.join(self.builder.workdir, 'debian', 'changelog'), 'w').write(changelog_entry % changelog_data)
         
-        self.project.version(branch, open(os.path.join(self.builder.workdir, 'debian/changelog'), 'r').readline().split('(')[1].split(')')[0])
-        self.project.save()
-            
         rvm_env = {}
         rvm_rc = os.path.join(self.builder.workdir, '.rvmrc')
         rvm_rc_example = rvm_rc +  ".example"

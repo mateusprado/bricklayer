@@ -128,13 +128,6 @@ class Builder:
             
             self.git.checkout_branch('master')
             
-            
-            """
-            When a stable_x.x.x or testing_x.x.x tag is found it is treated as a stable and testing build
-            respectively thus special handling is needed, master is used as 'branch' 
-            when uploading stable should be passed in order to match the correct filename
-            """
-
             branch = 'master'
             for tag_type in ('testing', 'stable'):
                 tags = self.git.tags(tag_type)
