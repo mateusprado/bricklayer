@@ -124,7 +124,7 @@ class DebBuilder():
                     shell=True, stdout=subprocess.PIPE)
             rvm_cmd.wait()
 
-            rvm_default_cmd = subprocess.Popen(['/usr/local/bin/rvm', 'default', '%s' % rvmexec.split()[1])
+            rvm_default_cmd = subprocess.Popen(['/usr/local/bin/rvm', 'default', '%s' % rvmexec.split()[1]])
             rvm_default_cmd.wait()
 
             for line in rvm_cmd.stdout.readlines():
