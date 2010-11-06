@@ -22,7 +22,7 @@ from rpm_builder import RpmBuilder
 from deb_builder import DebBuilder
 
 log = logging.getLogger('builder')
-log.setLevel(logging.DEBUG)
+log.basicConfig(filename='/var/log/bricklayer-builder.log', level=logging.DEBUG)
 
 def build_project(project, branch, force):
     log.debug("> %s %s %s" % (project, branch, force))
