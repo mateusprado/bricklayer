@@ -109,8 +109,6 @@ class Builder:
                 self.project.save()
 
                 self.oldworkdir = self.workdir
-                if os.path.isdir("%s-%s" % (self.workdir, branch)):
-                    shutil.rmtree("%s-%s" % (self.workdir, branch))
                 shutil.copytree(self.workdir, "%s-%s" % (self.workdir, branch))
                 self.workdir = "%s-%s" % (self.workdir, branch)
                 self.git.workdir = self.workdir
