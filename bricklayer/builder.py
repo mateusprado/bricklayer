@@ -122,7 +122,6 @@ class Builder:
                     self.package_builder.upload(branch)
                     log.info("build complete")
 
-                shutil.rmtree(self.workdir)
                 self.workdir = self.oldworkdir
                 self.git.workdir = self.workdir
             
