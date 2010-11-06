@@ -109,7 +109,8 @@ class Builder:
                 self.project.save()
 
                 self.oldworkdir = self.workdir
-                shutil.copytree(self.workdir, "%s-%s" % (self.workdir, branch))
+                if not os.path.isdir("%s-%s" % (self.workdir, branch)):
+                    shutil.copytree(self.workdir, "%s-%s" % (self.workdir, branch))
                 self.workdir = "%s-%s" % (self.workdir, branch)
                 self.git.workdir = self.workdir
                 self.git.checkout_branch(branch)
