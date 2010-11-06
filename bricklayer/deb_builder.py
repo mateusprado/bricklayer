@@ -157,7 +157,7 @@ class DebBuilder():
             open(control, 'w').write(control_data_original)
 
         if has_rvm:
-            rvm_default_cmd = subprocess.Popen(['/usr/local/bin/rvm', 'default', 'system')
+            rvm_default_cmd = subprocess.Popen(['/usr/local/bin/rvm', 'default', 'system'])
             rvm_default_cmd.wait()
 
         clean_cmd = self.builder._exec(['dh', 'clean'], cwd=self.builder.workdir)
