@@ -123,6 +123,10 @@ class DebBuilder():
             rvm_cmd = subprocess.Popen('/usr/local/bin/rvm info %s' % rvmexec.split()[1],
                     shell=True, stdout=subprocess.PIPE)
             rvm_cmd.wait()
+
+            rvm_default_cmd = subprocess.Popen(['/usr/local/bin/rvm', 'default', '%s' % rvmexec.split()[1])
+            rvm_default_cmd.wait()
+
             for line in rvm_cmd.stdout.readlines():
                 if 'PATH' in line or 'HOME' in line:
                     name, value = line.split()
@@ -151,6 +155,10 @@ class DebBuilder():
         control = os.path.join(self.builder.workdir, 'debian', 'control')
         if os.path.isfile(control) and control_data_original:
             open(control, 'w').write(control_data_original)
+
+        if has_rvm:
+            rvm_default_cmd = subprocess.Popen(['/usr/local/bin/rvm', 'default', 'system')
+            rvm_default_cmd.wait()
 
         clean_cmd = self.builder._exec(['dh', 'clean'], cwd=self.builder.workdir)
         clean_cmd.wait()
