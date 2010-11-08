@@ -1,6 +1,6 @@
 h1. Bricklayer Manual
 
-Bricklayer builds packages to help you automate builds and upload packages to repositories.
+Bricklayer builds packages to help you automate builds and upload them to repositories.
 
 h2. Requirements
 
