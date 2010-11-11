@@ -57,7 +57,7 @@ class Project(cyclone.web.RequestHandler):
                     self.get_argument('repository_passwd'))
 
         for aname, arg in self.request.arguments.iteritems():
-            elif aname in ('branch'):
+            if aname in ('branch'):
                 branch = arg
             else:
                 setattr(project, aname, arg[0])
