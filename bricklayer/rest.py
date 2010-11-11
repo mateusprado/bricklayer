@@ -51,10 +51,13 @@ class Project(cyclone.web.RequestHandler):
         project = Projects(name)
 
         if self.request.arguments.has_key('repository_url'):
-            project.repository(
-                    self.request.arguments['repository_url'], 
-                    self.get_argument('repository_user'), 
-                    self.get_argument('repository_passwd'))
+            try:
+                project.repository(
+                    self.get_argument('repository_url')[0], 
+                    self.get_argument('repository_user')[0], 
+                    self.get_argument('repository_passwd')[0])
+            except Exception, e:
+                log.err()
 
         for aname, arg in self.request.arguments.iteritems():
             if aname in ('branch'):
