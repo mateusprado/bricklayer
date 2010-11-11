@@ -50,15 +50,6 @@ class Project(cyclone.web.RequestHandler):
         branch = 'master'
         project = Projects(name)
 
-        if self.request.arguments.has_key('repository_url'):
-            try:
-                project.repository(
-                    self.get_argument('repository_url')[0], 
-                    self.get_argument('repository_user')[0], 
-                    self.get_argument('repository_passwd')[0])
-            except Exception, e:
-                log.err()
-
         for aname, arg in self.request.arguments.iteritems():
             if aname in ('branch'):
                 branch = arg
@@ -122,10 +113,26 @@ class Build(cyclone.web.RequestHandler):
         reactor.callInThread(_dreque.enqueue, 'build', 'builder.build_project', project.name, branch, True)
         self.write(cyclone.escape.json_encode({'status': 'build of branch %s scheduled' % branch}))
 
+class Repository(cyclone.web.RequestHandler):
+    def put(self, name):
+        branch = 'master'
+        project = Projects(name)
+
+        log.msg(self.request.arguments)
+        try:
+            project.repository(
+                self.get_argument('repository_url')[0],
+                self.get_argument('repository_user')[0],
+                self.get_argument('repository_passwd')[0])
+        except Exception, e:
+            log.err()
+
+
 restApp = cyclone.web.Application([
     (r'/project', Project),
     (r'/project/(.*)', Project),
     (r'/branch/(.*)', Branch),
     (r'/build/(.*)', Build),
+    (r'/repository/(.*)', Repository),
 ])
 
