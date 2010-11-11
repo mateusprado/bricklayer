@@ -1,18 +1,19 @@
 h1. Bricklayer Manual
 
-Bricklayer builds packages to help you automate builds and upload packages to repositories.
+Bricklayer builds packages to help you automate builds and upload them to repositories.
 
 h2. Requirements
 
-Bricklayer uses twisted to serve a restful interface as well as the scheduler interface, it also needs sqlalchemy to save projects in a sqlite database (works with any other database supported by sqlalchemy). They are already included in the project.
+Bricklayer uses twisted to serve a restful interface as well as the scheduler interface, it also needs Redis 2.0 or higher to store projects. You don't have to bother about twisted because it's already included in the project, but you have to install Redis by yourself.
 
 h2. Installation
 
-Bricklayer has a debian directory ready to be built, to do so under a debian-based system run:
+Bricklayer has a debian directory ready to be built. To do so under a debian-based system just run (after install Redis):
 
 <pre>
 export PYTHONPATH="."
 apt-get -y install build-essential devscripts cdbs python-twisted python-setuptools python-simplejson
+apt-get -y install python2.5-dev && easy_install multiprocessing ## if using Python 2.5 ##
 dpkg-buildpackage -rfakeroot # (inside the project directory)
 dpkg -i ../bricklayer*.deb # were * is your architecture and version
 </pre>
