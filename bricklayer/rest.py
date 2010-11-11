@@ -49,9 +49,14 @@ class Project(cyclone.web.RequestHandler):
     def put(self, name):
         branch = 'master'
         project = Projects(name)
+
+        if self.request.arguments.has_key('repository_url'):
+            project.repository(
+                    self.request.arguments['repository_url'], 
+                    self.get_argument('repository_user'), 
+                    self.get_argument('repository_passwd'))
+
         for aname, arg in self.request.arguments.iteritems():
-            if aname in ('repository_url'):
-                project.repository(arg)
             elif aname in ('branch'):
                 branch = arg
             else:
