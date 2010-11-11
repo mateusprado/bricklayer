@@ -186,14 +186,10 @@ class DebBuilder():
         return distribution, files
 
     def upload_files(self, distribution, files):
-        repository_url = self.project.repository()
+        repository_url, user, passwd = self.project.repository()
         if not repository_url:
             repository_url = BrickConfig().get('repository', 'url')
         parsed_url = urlparse(repository_url)
-        host = parsed_url[1]
-        user, host = host.split('@')
-        user, passwd = user.split(':')
-
         os.chdir(self.builder.workspace)
         ftp = ftplib.FTP(host, user, passwd)
         try:

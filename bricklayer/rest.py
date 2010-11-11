@@ -31,7 +31,11 @@ class Project(cyclone.web.RequestHandler):
                 project.version(self.get_argument('branch'), self.get_argument('version'))
                 project.save()
                 if self.request.arguments.has_key('repository_url'):
-                    project.repository(self.request.arguments['repository_url'])
+                    project.repository(
+                            self.request.arguments['repository_url'], 
+                            self.request.arguments['repository_user'], 
+                            self.request.arguments['repository_passwd']
+                        )
                 log.msg('Project created:', project.name)
                 reactor.callInThread(_dreque.enqueue, 'build', 'builder.build_project', project.name, self.get_argument('branch'), True)
             except Exception, e:
