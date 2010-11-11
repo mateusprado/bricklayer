@@ -7,6 +7,7 @@ import glob
 import stat
 import logging as log
 import subprocess
+from urlparse import urlparse
 
 from projects import Projects
 from config import BrickConfig
@@ -123,10 +124,6 @@ class DebBuilder():
             rvm_cmd = subprocess.Popen('/usr/local/bin/rvm info %s' % rvmexec.split()[1],
                     shell=True, stdout=subprocess.PIPE)
             rvm_cmd.wait()
-
-            rvm_default_cmd = subprocess.Popen(['/usr/local/bin/rvm', 'default', '%s' % rvmexec.split()[1]])
-            rvm_default_cmd.wait()
-
             for line in rvm_cmd.stdout.readlines():
                 if 'PATH' in line or 'HOME' in line:
                     name, value = line.split()
@@ -156,24 +153,56 @@ class DebBuilder():
         if os.path.isfile(control) and control_data_original:
             open(control, 'w').write(control_data_original)
 
-        if has_rvm:
-            rvm_default_cmd = subprocess.Popen(['/usr/local/bin/rvm', 'default', 'system'])
-            rvm_default_cmd.wait()
-
         clean_cmd = self.builder._exec(['dh', 'clean'], cwd=self.builder.workdir)
         clean_cmd.wait()
 
     def upload(self, branch):
-        if branch == 'stable':
+        if branch in ('stable', 'testing'):
             changes_file = glob.glob('%s/%s_%s_*.changes' % (self.builder.workspace, self.project.name, self.project.version(branch)))[0]
-            upload_cmd = self.builder._exec(['dput', branch, changes_file])
-        elif branch == 'testing':
-            changes_file = glob.glob('%s/%s_%s_*.changes' % (self.builder.workspace, self.project.name, self.project.version(branch)))[0]
-            upload_cmd = self.builder._exec(['dput', changes_file])
         else:
             changes_file = glob.glob('%s/%s-%s_%s_*.changes' % (self.builder.workspace, self.project.name, branch, self.project.version(branch)))[0]
-            upload_cmd = self.builder._exec(['dput', changes_file])
-        upload_cmd.wait()
+        distribution, files = self.parse_changes(changes_file)
+        self.upload_files(distribution, files)
+        upload_file = changes_file.replace('.changes', '.upload')
+        open(upload_file, 'w').write("done")
+        
+    def parse_changes(self, changes_file):
+        content = open(changes_file).readlines()
+        nl = sl = el = 0
+        distribution = ""
+        for line in content:
+            if line.startswith('Distribution'):
+                distribution = line.strip('\n')
+                distribution = distribution.split(':')[1].strip(' ')
+            if line.startswith('File'):
+                sl = nl
+            if line.startswith('-----BEGIN') and nl > sl:
+                el = nl
+            nl += 1
+        tmpfiles = content[sl+1:el-1]
+        files = []
+        for f in tmpfiles:
+            files.append(f.split()[4])
+        return distribution, files
+
+    def upload_files(self, distribution, files):
+        repository_url = self.project.repository()
+        if not repository_url:
+            repository_url = BrickConfig().get('repository', 'url')
+        parsed_url = urlparse(repository_url)
+        host = parsed_url[1]
+        user, host = host.split('@')
+        user, passwd = user.split(':')
+
+        os.chdir(self.builder.workspace)
+        ftp = ftplib.FTP(host, user, passwd)
+        try:
+            ftp.cwd(distribution)
+            for f in files:
+                ftp.storebinary("STORE %s" % f, open(f, 'rb'))
+        except Exception, e:
+            log.info(repr(e))
+        ftp.quit()
 
     def promote_to(self, version, release):
         self.project.version(version=version)

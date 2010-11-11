@@ -30,6 +30,8 @@ class Project(cyclone.web.RequestHandler):
                 project.add_branch(self.get_argument('branch'))
                 project.version(self.get_argument('branch'), self.get_argument('version'))
                 project.save()
+                if self.request.arguments.has_key('repository_url'):
+                    project.repository(self.request.arguments['repository_url'])
                 log.msg('Project created:', project.name)
                 reactor.callInThread(_dreque.enqueue, 'build', 'builder.build_project', project.name, self.get_argument('branch'), True)
             except Exception, e:
@@ -43,11 +45,13 @@ class Project(cyclone.web.RequestHandler):
     def put(self, name):
         branch = 'master'
         project = Projects(name)
-        for name, arg in self.request.arguments.iteritems():
-            if name in ('branch'):
+        for aname, arg in self.request.arguments.iteritems():
+            if aname in ('repository_url'):
+                project.repository(arg)
+            elif aname in ('branch'):
                 branch = arg
             else:
-                setattr(project, name, arg[0])
+                setattr(project, aname, arg[0])
         try:
             project.save()
             self.finish(cyclone.escape.json_encode({'status': 'build scheduled'}))

@@ -76,6 +76,15 @@ class Projects:
         index = redis_cli.lindex('branches:%s' % self.name, branch)
         redis_cli.lrem('branches:%s' % self.name, index)
         redis_cli.connection.disconnect()
+    
+    def repository(self, repository=''):
+        redis_cli = self.connect()
+        if repository:
+            res = redis_cli.set("repository:%s" % self.name, repository)
+        else:
+            res = redis_cli.get("repository:%s" % self.name)
+        redis_cli.connection.disconnect()
+        return res
 
     def branches(self):
         redis_cli = self.connect()
