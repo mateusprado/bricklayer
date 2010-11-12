@@ -178,14 +178,14 @@ class DebBuilder():
                 distribution = distribution.split(':')[1].strip(' ')
             if line.startswith('File'):
                 go = 1
-            if not line.startswith('File') and not line.startswith('\n') and go == 1:
+            elif not line.startswith('\n') and go == 1:
                 tmpname = line.split()
                 pos = len(tmpname)
                 tmpfiles.append(tmpname[pos-1])
             else: 
                 go = 0
         files = []
-        for f in tmpfiles[1:]:
+        for f in tmpfiles:
             filename = f.split()
             files.append(filename[len(filename) - 1])
         return distribution, files
