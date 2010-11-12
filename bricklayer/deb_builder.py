@@ -7,6 +7,7 @@ import glob
 import stat
 import logging as log
 import subprocess
+import ftplib
 from urlparse import urlparse
 
 from projects import Projects
@@ -168,21 +169,25 @@ class DebBuilder():
         
     def parse_changes(self, changes_file):
         content = open(changes_file).readlines()
-        nl = sl = el = 0
+        go = 0
         distribution = ""
+        tmpfiles = []
         for line in content:
             if line.startswith('Distribution'):
                 distribution = line.strip('\n')
                 distribution = distribution.split(':')[1].strip(' ')
             if line.startswith('File'):
-                sl = nl
-            if line.startswith('-----BEGIN') and nl > sl:
-                el = nl
-            nl += 1
-        tmpfiles = content[sl+1:el-1]
+                go = 1
+            if not line.startswith('\n') and go == 1:
+                tmpname = line.split()
+                pos = len(tmpname)
+                tmpfiles.append(tmpname[pos-1])
+            else: 
+                go = 0
         files = []
-        for f in tmpfiles:
-            files.append(f.split()[4])
+        for f in tmpfiles[1:]:
+            filename = f.split()
+            files.append(filename[len(filename) - 1])
         return distribution, files
 
     def upload_files(self, distribution, files):
@@ -195,7 +200,8 @@ class DebBuilder():
         try:
             ftp.cwd(distribution)
             for f in files:
-                ftp.storebinary("STORE %s" % f, open(f, 'rb'))
+                ftp.storbinary("STOR %s" % f, open(f, 'rb'))
+                log.info("\t%s: done." % f)
         except Exception, e:
             log.info(repr(e))
         ftp.quit()

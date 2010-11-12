@@ -114,16 +114,14 @@ class Build(cyclone.web.RequestHandler):
         self.write(cyclone.escape.json_encode({'status': 'build of branch %s scheduled' % branch}))
 
 class Repository(cyclone.web.RequestHandler):
-    def put(self, name):
+    def post(self, name):
         branch = 'master'
         project = Projects(name)
-
-        log.msg(self.request.arguments)
         try:
             project.repository(
-                self.get_argument('repository_url')[0],
-                self.get_argument('repository_user')[0],
-                self.get_argument('repository_passwd')[0])
+                self.get_argument('repository_url'),
+                self.get_argument('repository_user'),
+                self.get_argument('repository_passwd'))
         except Exception, e:
             log.err()
 

@@ -84,9 +84,10 @@ class Projects:
             redis_cli.set("repository:%s:user" % self.name, user) 
             redis_cli.set("repository:%s:passwd" % self.name, passwd) 
         else:
-            res = redis_cli.get("repository:%s" % self.name)
-            res += redis_cli.get("repository:%s:user" % self.name)
-            res += redis_cli.get("repository:%s:passwd" % self.name)
+            res = []
+            res.append(redis_cli.get("repository:%s" % self.name))
+            res.append(redis_cli.get("repository:%s:user" % self.name))
+            res.append(redis_cli.get("repository:%s:passwd" % self.name))
         redis_cli.connection.disconnect()
         return res
 
