@@ -130,12 +130,12 @@ class DebBuilder():
                     name, value = line.split()
                     rvm_env[name.strip(':')] = value.strip('"')
             rvm_env['HOME'] = os.environ['HOME']
-            log.info(rvm_env)
 
         if len(rvm_env.keys()) < 1:
             rvm_env = os.environ
         else:
             try:
+                os.environ.pop('PATH')
                 os.environ.pop('GEM_HOME')
                 os.environ.pop('BUNDLER_PATH')
             except Exception, e:
@@ -171,7 +171,7 @@ class DebBuilder():
         content = open(changes_file).readlines()
         go = 0
         distribution = ""
-        tmpfiles = [change_file]
+        tmpfiles = [changes_file]
         for line in content:
             if line.startswith('Distribution'):
                 distribution = line.strip('\n')
