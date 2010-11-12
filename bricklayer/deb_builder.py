@@ -171,14 +171,14 @@ class DebBuilder():
         content = open(changes_file).readlines()
         go = 0
         distribution = ""
-        tmpfiles = [changes_file]
+        tmpfiles = [os.path.basename(changes_file)]
         for line in content:
             if line.startswith('Distribution'):
                 distribution = line.strip('\n')
                 distribution = distribution.split(':')[1].strip(' ')
             if line.startswith('File'):
                 go = 1
-            if not line.startswith('\n') and go == 1:
+            if not line.startswith('File') and not line.startswith('\n') and go == 1:
                 tmpname = line.split()
                 pos = len(tmpname)
                 tmpfiles.append(tmpname[pos-1])
