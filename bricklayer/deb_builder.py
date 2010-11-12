@@ -171,7 +171,7 @@ class DebBuilder():
         content = open(changes_file).readlines()
         go = 0
         distribution = ""
-        tmpfiles = []
+        tmpfiles = [change_file]
         for line in content:
             if line.startswith('Distribution'):
                 distribution = line.strip('\n')
@@ -200,8 +200,9 @@ class DebBuilder():
         try:
             ftp.cwd(distribution)
             for f in files:
+                log.info("\t%s: " % f)
                 ftp.storbinary("STOR %s" % f, open(f, 'rb'))
-                log.info("\t%s: done." % f)
+                log.info("done.")
         except Exception, e:
             log.info(repr(e))
         ftp.quit()
