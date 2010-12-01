@@ -5,6 +5,7 @@ import sys
 sys.path.append(os.path.dirname(__file__))
 from projects import Projects
 from builder import Builder
+from build_info import BuildInfo
 
 import cyclone.web
 import cyclone.escape
@@ -32,9 +33,9 @@ class Project(cyclone.web.RequestHandler):
                 project.save()
                 if self.request.arguments.has_key('repository_url'):
                     project.repository(
-                            self.request.arguments['repository_url'], 
-                            self.request.arguments['repository_user'], 
-                            self.request.arguments['repository_passwd']
+                            self.request.arguments['repository_url'][0], 
+                            self.request.arguments['repository_user'][0], 
+                            self.request.arguments['repository_passwd'][0]
                         )
                 log.msg('Project created:', project.name)
                 reactor.callInThread(_dreque.enqueue, 'build', 'builder.build_project', project.name, self.get_argument('branch'), True)
@@ -63,16 +64,36 @@ class Project(cyclone.web.RequestHandler):
             self.finish(cyclone.escape.json_encode({'status': 'fail'}))
         reactor.callInThread(_dreque.enqueue, 'build', 'builder.build_project', project.name, branch, True)
     
-    def get(self, name, branch='master'):
+    def get(self, name='', branch='master'):
         try:
-            project = Projects(name)
+            if name:
+                    project = Projects(name)
+                    reply = {'name': project.name, 
+                            'branch': project.branches(),
+                            'git_url': project.git_url, 
+                            'version': project.version(),
+                            'last_tag_testing': project.last_tag(tag_type='testing'),
+                            'last_tag_stable': project.last_tag(tag_type='stable'),
+                            'last_commit': project.last_commit(branch)}
+                    
+
+            else:
+                projects = Projects.get_all()
+                reply = []
+                for project in projects:
+                    reply.append(
+                            {'name': project.name, 
+                            'branch': project.branches(),
+                            'git_url': project.git_url, 
+                            'version': project.version(),
+                            'last_tag_testing': project.last_tag(tag_type='testing'),
+                            'last_tag_stable': project.last_tag(tag_type='stable'),
+                            'last_commit': project.last_commit(branch)
+                            })
+
+            self.write(cyclone.escape.json_encode(reply))
         except Exception, e:
             self.write(cyclone.escape.json_encode("%s No project found" % e))
-        self.write(cyclone.escape.json_encode({'name': project.name, 
-                'git_url': project.git_url, 
-                'version': project.version(),
-                'last_tag': project.last_tag(branch),
-                'last_commit': project.last_commit(branch)}))
 
 
     def delete(self, name, branch):
@@ -113,6 +134,11 @@ class Build(cyclone.web.RequestHandler):
         reactor.callInThread(_dreque.enqueue, 'build', 'builder.build_project', project.name, branch, True)
         self.write(cyclone.escape.json_encode({'status': 'build of branch %s scheduled' % branch}))
 
+    def get(self, project_name):
+        project = project_name
+        builds = BuildInfo(project, 1).builds()
+        self.write(cyclone.escape.json_encode())
+
 class Repository(cyclone.web.RequestHandler):
     def post(self, name):
         branch = 'master'
@@ -128,9 +154,10 @@ class Repository(cyclone.web.RequestHandler):
 
 restApp = cyclone.web.Application([
     (r'/project', Project),
-    (r'/project/(.*)', Project),
+    (r'/project/?(.*)', Project),
     (r'/branch/(.*)', Branch),
     (r'/build/(.*)', Build),
     (r'/repository/(.*)', Repository),
+    (r'/static/(.*)', cyclone.web.StaticFileHandler, {'path': os.path.join(os.path.dirname(__file__), '../static')}),
 ])
 

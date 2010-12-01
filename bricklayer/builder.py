@@ -20,6 +20,7 @@ import logging
 
 from rpm_builder import RpmBuilder
 from deb_builder import DebBuilder
+from build_info import BuildInfo
 
 logging.basicConfig(filename='/var/log/bricklayer-builder.log', level=logging.DEBUG)
 log = logging.getLogger('builder')
@@ -47,6 +48,7 @@ class Builder:
         self.ftp_user = BrickConfig().get('ftp', 'user')
         self.ftp_pass = BrickConfig().get('ftp', 'pass')
         self.ftp_dir = BrickConfig().get('ftp', 'dir')
+        
         if self.build_system == 'rpm':
             self.package_builder = RpmBuilder(self)
         elif self.build_system == 'deb':
@@ -64,7 +66,9 @@ class Builder:
         if not os.path.isdir(self.workspace):
             os.makedirs(self.workspace)
         
-        self.stdout = open(self.workspace + '/%s.log' % self.project.name, 'a+')
+        self.build_info = BuildInfo(project) 
+        self.build_info.set_log(self.workspace + '/%s.%s.log' % (self.project.name, self.build_info.build_id))
+        self.stdout = open(self.build_info.log(), 'a+')
         self.stderr = self.stdout
 
     def _exec(self, cmd, *args, **kwargs):
