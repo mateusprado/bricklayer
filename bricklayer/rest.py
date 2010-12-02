@@ -136,8 +136,12 @@ class Build(cyclone.web.RequestHandler):
 
     def get(self, project_name):
         project = project_name
-        builds = BuildInfo(project, 1).builds()
-        self.write(cyclone.escape.json_encode())
+        build_ids = BuildInfo(project, -1).builds()
+        builds = []
+        for bid in build_ids:
+            build = BuildInfo(build_id=bid)
+            builds.append({'id': bid, 'log': build.log(), 'version': build.version(), 'date': build.time()})
+        self.write(cyclone.escape.json_encode(builds))
 
 class Repository(cyclone.web.RequestHandler):
     def post(self, name):

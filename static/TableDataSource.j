@@ -61,49 +61,41 @@
 @implementation BuildsDataSource: CPObject
 {
     JSONObject tbData;
-    id _target;
+    id tableView;
 }
 
-- (void)initWithData:(CPData)data
+-(void)connection:(CPConnection)aConn didReceiveData:(CPString)data
 {
-    tbData = [data JSONObject];
-}
-
-- (void)setTarget:(id)target
-{
-    _target = target;    
+    var cpdata = [[CPData alloc] initWithRawString:data];
+    tbData = [cpdata JSONObject];
+    [tableView reloadData];
 }
 
 - (CPInteger)numberOfRowsInTableView:(id)sender
 {
-    console.log(tbData);
-    return [tbData count] + 1;
+    return [tbData count];
+}
+
+- (void)setTableView:(id)view
+{
+    tableView = view;    
 }
 
 - (CPInteger)tableView:(id)aTableView objectValueForTableColumn:(id)tableColumn row:(id)aRow
 {
+    console.log([tableColumn identifier]);
+    console.log(aRow);
     return tbData[aRow][[tableColumn identifier]];
-}
-
-- (BOOL)tableView:(CPTableView)aTableView isGroupRow:(int)aRow
-{
-    return aRow === 0;    
 }
 
 - (void)tableViewSelectionDidChange:(id)notification
 {
     var selection = [[notification object] selectedRow];
-    [_target loadProject:tbData[selection - 1]];
 }
 
 - (BOOL)tableView:(CPTableView)aTableView shouldSelectRow:(int)aRow
 {
-    if (aRow === 0) {
-       return NO;
-    }
-    else {
         return YES;    
-    }
 }
 
 @end

@@ -67,7 +67,7 @@ class Builder:
             os.makedirs(self.workspace)
         
         self.build_info = BuildInfo(project) 
-        self.build_info.set_log(self.workspace + '/%s.%s.log' % (self.project.name, self.build_info.build_id))
+        self.build_info.log(self.workspace + '/%s.%s.log' % (self.project.name, self.build_info.build_id))
         self.stdout = open(self.build_info.log(), 'a+')
         self.stderr = self.stdout
 
@@ -141,6 +141,8 @@ class Builder:
                         self.package_builder.build(branch, self.project.last_tag(tag_type=tag_type))
                         self.package_builder.upload(tag_type)
                         self.git.checkout_branch(branch)
+
+            self.build_info.version(self.project.version())
 
 
         except Exception, e:

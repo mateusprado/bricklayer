@@ -37,7 +37,6 @@
 - (void)applicationDidFinishLaunching:(CPNotification)aNotification
 {
     // This is called when the application is done loading.
-    
     var urlRequest = [CPURLRequest requestWithURL:@"/project"];
     [urlRequest setHTTPMethod:"GET"];
     var connection = [CPURLConnection connectionWithRequest:urlRequest delegate:self];
@@ -93,6 +92,17 @@
     [lastTestingTagValue setStringValue:projectInfo["last_tag_testing"]];
     [lastStableTagValue setStringValue:projectInfo["last_tag_stable"]];
     [lastCommitValue setStringValue:projectInfo["last_commit"]];
+
+    var buildsDataSource = [BuildsDataSource alloc];
+    [buildsDataSource setTableView:buildView];
+
+    var buildUrlRequest = [CPURLRequest requestWithURL:@"/build/" + projectInfo["name"]];
+    [buildUrlRequest setHTTPMethod:"GET"];
+    var connection = [CPURLConnection connectionWithRequest:buildUrlRequest delegate:buildsDataSource];
+
+    [buildView setDataSource:buildsDataSource];
+    [buildView setDelegate:buildsDataSource];
+
 }
 
 -(void)setFontAttrs:(id)view isTitle:(BOOL)title
