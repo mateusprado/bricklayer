@@ -12,6 +12,7 @@ from urlparse import urlparse
 
 from projects import Projects
 from config import BrickConfig
+from build_info import BuildInfo
 
 from git import Git
 
@@ -26,6 +27,12 @@ class DebBuilder():
         debian_dir = os.path.join(self.builder.workdir, 'debian')
         control_data_original = None
         control_data_new = None
+
+        self.build_info = BuildInfo(self.project.name)
+        logfile = os.path.join(self.builder.workspace, 'log', '%s.%s.log' % (self.project.name, self.build_info.build_id))
+        self.build_info.log(logfile)
+        self.stdout = open(logfile, 'a+')
+        self.stderr = self.stdout
 
         if self.project.install_prefix is None:
             self.project.install_prefix = 'opt'
@@ -81,10 +88,12 @@ class DebBuilder():
         if last_tag != None and last_tag.startswith('stable'):
             self.project.version('stable', last_tag.split('_')[1])
             changelog_data.update({'version': self.project.version('stable'), 'branch': 'stable'})
+            self.build_info.version(self.project.version('stable'))
 
         elif last_tag != None and last_tag.startswith('testing'):
             self.project.version('testing', last_tag.split('_')[1])
             changelog_data.update({'version': self.project.version('testing'), 'branch': 'testing'})
+            self.build_info.version(self.project.version('testing'))
 
         else:
             """
@@ -103,6 +112,7 @@ class DebBuilder():
                 self.project.version(branch, '.'.join(version_list))
 
             changelog_data.update({'version': self.project.version(branch), 'name': "%s-%s" % (self.project.name, branch), 'branch': 'testing'})
+            self.build_info.version(self.project.version(branch))
 
         open(os.path.join(self.builder.workdir, 'debian', 'changelog'), 'w').write(changelog_entry % changelog_data)
         
@@ -145,7 +155,7 @@ class DebBuilder():
         os.chmod(os.path.join(debian_dir, 'rules'), stat.S_IRWXU|stat.S_IRWXG|stat.S_IROTH|stat.S_IXOTH)
         dpkg_cmd = self.builder._exec(
                 ['dpkg-buildpackage',  '-rfakeroot', '-k%s' % BrickConfig().get('gpg', 'keyid')],
-                cwd=self.builder.workdir, env=rvm_env
+                cwd=self.builder.workdir, env=rvm_env, stdout=self.stdout, stderr=self.stderr
         )
         
         dpkg_cmd.wait()

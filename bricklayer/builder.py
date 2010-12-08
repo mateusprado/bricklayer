@@ -20,7 +20,6 @@ import logging
 
 from rpm_builder import RpmBuilder
 from deb_builder import DebBuilder
-from build_info import BuildInfo
 
 logging.basicConfig(filename='/var/log/bricklayer-builder.log', level=logging.DEBUG)
 log = logging.getLogger('builder')
@@ -66,13 +65,13 @@ class Builder:
         if not os.path.isdir(self.workspace):
             os.makedirs(self.workspace)
         
-        self.build_info = BuildInfo(project) 
-        self.build_info.log(self.workspace + '/%s.%s.log' % (self.project.name, self.build_info.build_id))
-        self.stdout = open(self.build_info.log(), 'a+')
+        if not os.path.isdir(os.path.join(self.workspace, 'log')):
+            os.makedirs(os.path.join(self.workspace, 'log'))
+
+        self.stdout = None
         self.stderr = self.stdout
 
     def _exec(self, cmd, *args, **kwargs):
-        kwargs.update({'stdout': self.stdout, 'stderr': self.stderr})
         return subprocess.Popen(cmd, *args, **kwargs)
 
     def build_project(self, force=False, a_branch=None):
@@ -141,8 +140,6 @@ class Builder:
                         self.package_builder.build(branch, self.project.last_tag(tag_type=tag_type))
                         self.package_builder.upload(tag_type)
                         self.git.checkout_branch(branch)
-
-            self.build_info.version(self.project.version())
 
 
         except Exception, e:

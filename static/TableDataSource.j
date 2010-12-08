@@ -83,8 +83,6 @@
 
 - (CPInteger)tableView:(id)aTableView objectValueForTableColumn:(id)tableColumn row:(id)aRow
 {
-    console.log([tableColumn identifier]);
-    console.log(aRow);
     return tbData[aRow][[tableColumn identifier]];
 }
 
@@ -97,5 +95,14 @@
 {
         return YES;    
 }
+
+- (void)tableView:(CPTableView)aTableView sortDescriptorsDidChange:(CPArray)oldDescriptors
+{
+    var newDescriptors = [aTableView sortDescriptors];
+    [tbData sortUsingDescriptors:newDescriptors];
+
+	[aTableView reloadData];
+}
+
 
 @end

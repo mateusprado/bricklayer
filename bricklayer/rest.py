@@ -139,8 +139,8 @@ class Build(cyclone.web.RequestHandler):
         build_ids = BuildInfo(project, -1).builds()
         builds = []
         for bid in build_ids:
-            build = BuildInfo(build_id=bid)
-            builds.append({'id': bid, 'log': build.log(), 'version': build.version(), 'date': build.time()})
+            build = BuildInfo(project, bid)
+            builds.append({'build': bid, 'log': os.path.basename(build.log()), 'version': build.version(), 'date': build.time()})
         self.write(cyclone.escape.json_encode(builds))
 
 class Repository(cyclone.web.RequestHandler):
@@ -154,6 +154,13 @@ class Repository(cyclone.web.RequestHandler):
                 self.get_argument('repository_passwd'))
         except Exception, e:
             log.err()
+            
+
+class Log(cyclone.web.RequestHandler):
+    def get(self, project, build):
+        build_info = BuildInfo(project, build)
+        if os.path.isfile(build_info.log()):
+            self.write(open(build_info.log()).read())
 
 
 restApp = cyclone.web.Application([
@@ -161,6 +168,7 @@ restApp = cyclone.web.Application([
     (r'/project/?(.*)', Project),
     (r'/branch/(.*)', Branch),
     (r'/build/(.*)', Build),
+    (r'/log/(.*)/(.*)', Log),
     (r'/repository/(.*)', Repository),
     (r'/static/(.*)', cyclone.web.StaticFileHandler, {'path': os.path.join(os.path.dirname(__file__), '../static')}),
 ])

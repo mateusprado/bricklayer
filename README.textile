@@ -4,7 +4,7 @@ Bricklayer builds packages to help you automate builds and upload them to reposi
 
 h2. Requirements
 
-Bricklayer uses twisted to serve a restful interface as well as the scheduler interface, it also needs Redis 2.0 or higher to store projects. You don't have to bother about twisted because it's already included in the project, but you have to install Redis by yourself.
+Bricklayer uses twisted to serve a restful interface as well as the scheduler interface, it also needs Redis 2.0 or higher to store projects. Depending on the linux/unix flavor, you have to install Redis by yourself sine not all the distros include redis-2.0 yet.
 
 h2. Installation
 
@@ -12,7 +12,7 @@ Bricklayer has a debian directory ready to be built. To do so under a debian-bas
 
 <pre>
 export PYTHONPATH="."
-apt-get -y install build-essential devscripts cdbs python-twisted python-setuptools python-simplejson
+apt-get -y install build-essential devscripts cdbs python-twisted python-setuptools python-simplejson python-redis redis-server
 apt-get -y install python2.5-dev && easy_install multiprocessing ## if using Python 2.5 ##
 dpkg-buildpackage -rfakeroot # (inside the project directory)
 dpkg -i ../bricklayer*.deb # were * is your architecture and version
@@ -23,15 +23,26 @@ h2. Usage
 Bricklayer has a restful interface that accepts the following parameters:
 
 <pre>
-POST /project -> params:
+POST /project:
   name="bricklayer" # The project name
   version="1.0-1"   # Initial version (will be incremented by each git commit or hudson git tag)
   git_url="git://host/project/repository.git" # Repository URL to watch
+  branch="master"  # Branch to follow
   build_cmd="make"  # Command within your project that generate binaries or prepare your project to be installed
   install_cmd="make install PREFIX=debian/tmp" # A command within your project that install the generated binaries
 
-GET /project/name:
+GET /project/project_name:
   Return the attributes of the project in JSON format
+
+POST /build/project_name
+  branch="master" # inform the branch that will schedule a build
+
+GET /build/project_name
+  Return an array of completed builds
+
+GET /log/project_name/build_number
+  Return the logfile for the given build number
+
 </pre>
 
 h2. Building ruby applications ?
@@ -40,5 +51,7 @@ Bricklayer uses RVM to handle multiple ruby projects to be built in the same mac
 
 h2. What else ?
 
-To come ...
+It is important to note that bricklayer itself does nothing (beside watch your repository for tags and changes) but do what you told him to do, that means, if your project doesn't has enough automation to be able to pack itself by using scripts or make-like tasks the very best bricklayer can do is to provide templates that will copy everything in your project directory to a specific installation directory, still a package will be generated but no customizations will be made so BE AWARE and automate your project right way :D
+
+
 

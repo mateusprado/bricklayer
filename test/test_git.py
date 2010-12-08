@@ -24,6 +24,7 @@ class Git_test:
         self.project.name = 'bricklayer'
         self.project.git_url = '..'
         self.project.version = '1.0'
+        self.project.branch = 'master'
         self.project.replay()
 
         if not os.path.isdir('workspace'):
@@ -35,12 +36,7 @@ class Git_test:
         assert os.path.isdir(git.workdir)
         assert os.path.isdir(os.path.join(git.workdir, '.git'))
 
-    def create_tag_test(self):
-        git = Git(self.project, workdir='workspace')
-        git.create_tag('testing_tag')
-        print ">>>", git.list_tags()
-        assert_true('testing_tag' in git.list_tags())
-
+    def 
 
     
 

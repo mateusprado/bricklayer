@@ -10,12 +10,29 @@
 @import <AppKit/CPOutlineView.j>
 
 @import "TableDataSource.j"
+@import "ProjectCreate.j"
+@import "Font.j"
+@import "mustache.js"
+
+var htmlTemplate = nil;
 
 @implementation AppController : CPObject
 {
     CPWindow    theWindow; //this "outlet" is connected automatically by the Cib
     @outlet CPTableView menuView;
     @outlet CPTableView buildView;
+    @outlet CPWebView logView;
+    @outlet CPPanel logPanel;
+
+    @outlet CPPanel addPanel;
+    @outlet CPTextField addName;
+    @outlet CPTextField addRepository;
+    @outlet CPTextField addBranch;
+    @outlet CPTextField addVersion;
+    @outlet CPTextField addBuildCmd;
+    @outlet CPTextField addInstallCmd;
+    @outlet CPButton addSave;
+
     @outlet CPView projectView;
     @outlet CPTextField projectLabel;
     @outlet CPTextField repositoryLabel;
@@ -32,11 +49,17 @@
     @outlet CPTextField lastCommitLabel;
     @outlet CPTextField lastCommitValue;
     var dataSource;
+    var font;
 }
 
 - (void)applicationDidFinishLaunching:(CPNotification)aNotification
 {
     // This is called when the application is done loading.
+    [self getProjects];
+}
+
+-(void)getProjects
+{
     var urlRequest = [CPURLRequest requestWithURL:@"/project"];
     [urlRequest setHTTPMethod:"GET"];
     var connection = [CPURLConnection connectionWithRequest:urlRequest delegate:self];
@@ -52,24 +75,36 @@
     // In this case, we want the window from Cib to become our full browser window
     [theWindow setFullBridge:YES];
 
-    [self setFontAttrs:projectLabel isTitle:YES];
-    [self setFontAttrs:repositoryLabel isTitle:NO];
-    [self setFontAttrs:branchLabel isTitle:NO];
-    [self setFontAttrs:versionLabel isTitle:NO];
-    [self setFontAttrs:lastTestingTagLabel isTitle:NO];
-    [self setFontAttrs:lastStableTagLabel isTitle:NO];
-    [self setFontAttrs:lastCommitLabel isTitle:NO];
+    font = [Font alloc];
+
+    [font setFontAttrs:projectLabel isTitle:YES];
+    [font setFontAttrs:repositoryLabel isTitle:NO];
+    [font setFontAttrs:branchLabel isTitle:NO];
+    [font setFontAttrs:versionLabel isTitle:NO];
+    [font setFontAttrs:lastTestingTagLabel isTitle:NO];
+    [font setFontAttrs:lastStableTagLabel isTitle:NO];
+    [font setFontAttrs:lastCommitLabel isTitle:NO];
     
     var column = [menuView tableColumnWithIdentifier:@"name"];
     var columnView = [column dataView];
     
-    [self setMenuFontAttrs:columnView]; 
+    [font setMenuFontAttrs:columnView]; 
 
     [column setDataView:columnView];
 
     [menuView setBackgroundColor:[CPColor colorWithHexString:@"DEE4EA"]]; 
     [projectView setBackgroundColor:[CPColor colorWithHexString:@"DEE4EA"]]; 
+
+    var build_column = [buildView tableColumnWithIdentifier:@"build"], 
+        descriptor = [CPSortDescriptor sortDescriptorWithKey:@"build" ascending:NO];
+    [build_column setSortDescriptorPrototype:descriptor];
+
+    var date_column = [buildView tableColumnWithIdentifier:@"date"], 
+        descriptor = [CPSortDescriptor sortDescriptorWithKey:@"date" ascending:NO];
+    [date_column setSortDescriptorPrototype:descriptor];
     
+    [buildView setUsesAlternatingRowBackgroundColors:YES];
+    [buildView setDoubleAction:@selector(rowDoubleClicked:)];
 }
 
 -(void)connection:(CPConnection)aConn didReceiveData:(CPString)data
@@ -99,65 +134,74 @@
     var buildUrlRequest = [CPURLRequest requestWithURL:@"/build/" + projectInfo["name"]];
     [buildUrlRequest setHTTPMethod:"GET"];
     var connection = [CPURLConnection connectionWithRequest:buildUrlRequest delegate:buildsDataSource];
-
+    
     [buildView setDataSource:buildsDataSource];
     [buildView setDelegate:buildsDataSource];
 
 }
 
--(void)setFontAttrs:(id)view isTitle:(BOOL)title
+- (IBAction)saveClicked:(id)sender
 {
+    var name = [addName stringValue],
+        repository = [addRepository stringValue],
+        branch = [addBranch stringValue],
+        build_cmd = [addBuildCmd stringValue],
+        install_cmd = [addInstallCmd stringValue],
+        version = [addVersion stringValue];
 
-    if(title)
-    {
-    //    [view setLineBreakMode:CPLineBreakByTruncatingTail];
-    //    [view setFont:[CPFont boldSystemFontOfSize:12.0]];
-    //    [view setVerticalAlignment:CPCenterVerticalTextAlignment];
-    //    [view unsetThemeState:CPThemeStateSelectedDataView];
-        [view setValue:[CPFont boldSystemFontOfSize:14.0]                     forThemeAttribute:"font"];
-        [view setValue:[CPColor colorWithCalibratedWhite:125 / 255 alpha:1.0] forThemeAttribute:"text-color"];
-        [view setValue:[CPColor colorWithCalibratedWhite:1 alpha:1]           forThemeAttribute:"text-shadow-color"];
-        [view setValue:CGSizeMake(0,1)                                        forThemeAttribute:"text-shadow-offset"];
-        [view setValue:CGInsetMake(1.0, 0.0, 0.0, 2.0)                        forThemeAttribute:"content-inset"];
+    var postData = {'name': name, 'git_url': repository, 'branch': branch, 'version': version, 'build_cmd': build_cmd, 'install_cmd': install_cmd};
+    var postDict = [CPDictionary dictionaryWithJSObject:postData];
+    var keys = [postDict allKeys], k;
+    var body = "1=1";
+    var buildUrlRequest = [CPURLRequest requestWithURL:@"/project"];
+    var projectCreate = [ProjectCreate alloc];
 
+    for (k = 0; k < [keys count]; k++) {
+        if ([postDict valueForKey:keys[k]] != '') {
+            body += "&" + keys[k] + "=" + [postDict valueForKey:keys[k]];
+        }
     }
-    else {
-    //    [view setValue:[CPColor colorWithCalibratedRed:71/255 green:90/255 blue:102/255 alpha:1]           forThemeAttribute:"text-color"];
-    //    [view setValue:[CPColor colorWithCalibratedWhite:1 alpha:1]           forThemeAttribute:"text-shadow-color"];
-    //    [view setValue:CGSizeMake(0,1)                                        forThemeAttribute:"text-shadow-offset"];
-    //    [view setValue:[CPColor colorWithCalibratedWhite:0 alpha:0.5]           forThemeAttribute:"text-shadow-color"];
 
-        [view setLineBreakMode:CPLineBreakByTruncatingTail];
-        [view setFont:[CPFont boldSystemFontOfSize:11.0]];
-        [view setVerticalAlignment:CPCenterVerticalTextAlignment];
-        [view unsetThemeState:CPThemeStateSelectedDataView];
+    body += "\r\n";
 
-        [view setValue:[CPColor colorWithCalibratedRed:71/255 green:90/255 blue:102/255 alpha:1]  forThemeAttribute:"text-color"];
-        [view setValue:[CPColor colorWithCalibratedWhite:1 alpha:1]           forThemeAttribute:"text-shadow-color"];
-        [view setValue:CGSizeMake(0,-1)                                       forThemeAttribute:"text-shadow-offset"];
-
-    }
+    [buildUrlRequest setHTTPMethod:"POST"];
+    [buildUrlRequest setHTTPBody:body];
+    [buildUrlRequest setValue:"application/x-www-form-urlencoded" forHTTPHeaderField:"Content-Type"];
+    
+    [projectCreate setMainClass:self];
+    
+    var connection = [CPURLConnection connectionWithRequest:buildUrlRequest delegate:projectCreate];
 }
 
--(void)setMenuFontAttrs:(id)view
+-(void)rowDoubleClicked:(id)sender
 {
-    [view setLineBreakMode:CPLineBreakByTruncatingTail];
-    [view setFont:[CPFont boldSystemFontOfSize:11.0]];
-    [view setVerticalAlignment:CPCenterVerticalTextAlignment];
-    [view unsetThemeState:CPThemeStateSelectedDataView];
+    var delegate = [sender delegate];
+    var rowData = [delegate.tbData[[sender selectedRow]]][0];
+    var request = new CFHTTPRequest();
+    var project = [projectLabel stringValue];
+    var build_log = "";
 
-    [view setValue:[CPColor colorWithCalibratedRed:71/255 green:90/255 blue:102/255 alpha:1]           forThemeAttribute:"text-color"         inState:CPThemeStateTableDataView];
-    [view setValue:[CPColor colorWithCalibratedWhite:1 alpha:1]           forThemeAttribute:"text-shadow-color"  inState:CPThemeStateTableDataView];
-    [view setValue:CGSizeMake(0,1)                                        forThemeAttribute:"text-shadow-offset" inState:CPThemeStateTableDataView];
+    request.open("GET", "/static/buildlog.html", false);
+    request.oncomplete = function()
+    {
+        if (request.success())
+            htmlTemplate = request.responseText();
+    }
 
-    [view setValue:[CPColor colorWithCalibratedWhite:1 alpha:1.0]         forThemeAttribute:"text-color"         inState:CPThemeStateTableDataView | CPThemeStateSelectedTableDataView];
-    [view setValue:[CPColor colorWithCalibratedWhite:0 alpha:0.5]           forThemeAttribute:"text-shadow-color"  inState:CPThemeStateTableDataView | CPThemeStateSelectedTableDataView];
-    [view setValue:CGSizeMake(0,-1)                                       forThemeAttribute:"text-shadow-offset" inState:CPThemeStateTableDataView | CPThemeStateSelectedTableDataView];
+    request.send("");
 
-    [view setValue:[CPFont boldSystemFontOfSize:12.0]                     forThemeAttribute:"font"               inState:CPThemeStateTableDataView | CPThemeStateGroupRow];
-    [view setValue:[CPColor colorWithCalibratedWhite:125 / 255 alpha:1.0] forThemeAttribute:"text-color"         inState:CPThemeStateTableDataView | CPThemeStateGroupRow];
-    [view setValue:[CPColor colorWithCalibratedWhite:1 alpha:1]           forThemeAttribute:"text-shadow-color"  inState:CPThemeStateTableDataView | CPThemeStateGroupRow];
-    [view setValue:CGSizeMake(0,1)                                        forThemeAttribute:"text-shadow-offset" inState:CPThemeStateTableDataView | CPThemeStateGroupRow];
-    [view setValue:CGInsetMake(1.0, 0.0, 0.0, 2.0)                        forThemeAttribute:"content-inset"      inState:CPThemeStateTableDataView | CPThemeStateGroupRow];    
+    request.open("GET", "/log/" + project + "/" + rowData['build'], false);
+    request.oncomplete = function()
+    {
+        if (request.success())
+            build_log = request.responseText();
+    }
+
+    request.send("");
+
+    var htmlParsed = Mustache.to_html(htmlTemplate, {'build_log': build_log});
+    console.log(htmlParsed);
+    [logView loadHTMLString:htmlParsed];
+    [logPanel orderFront:self];
 }
 @end
