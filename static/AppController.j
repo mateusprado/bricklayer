@@ -84,7 +84,11 @@ var htmlTemplate = nil;
     [font setFontAttrs:lastTestingTagLabel isTitle:NO];
     [font setFontAttrs:lastStableTagLabel isTitle:NO];
     [font setFontAttrs:lastCommitLabel isTitle:NO];
-    
+   
+    [repositoryField setDelegate:self];
+    [branchField setDelegate:self];
+    [versionField setDelegate:self];
+
     var column = [menuView tableColumnWithIdentifier:@"name"];
     var columnView = [column dataView];
     
@@ -138,6 +142,30 @@ var htmlTemplate = nil;
     [buildView setDataSource:buildsDataSource];
     [buildView setDelegate:buildsDataSource];
 
+}
+
+- (void) controlTextDidEndEditing:(id)sender
+{
+    var changedValue = [[sender object] stringValue];
+    var textField = [sender object];
+    var request = new CFHTTPRequest();
+    
+    request.open("PUT", "/project/" + [projectLabel stringValue], false);
+    request.oncomplete = function()
+    {
+        if (request.success())
+            console.log(request.responseText());
+    }
+
+    if (textField == versionField) {
+        request.send("version=" + [versionField stringValue] + "\r\n");
+    }
+    else if (textField == repositoryField) {
+        request.send("git_url=" + [repositoryField stringValue] + "\r\n");
+    }
+    else if (textField == branchField) {
+        request.send("branch=" + [repositoryField stringValue] + "\r\n");
+    }
 }
 
 - (IBAction)saveClicked:(id)sender
@@ -200,7 +228,6 @@ var htmlTemplate = nil;
     request.send("");
 
     var htmlParsed = Mustache.to_html(htmlTemplate, {'build_log': build_log});
-    console.log(htmlParsed);
     [logView loadHTMLString:htmlParsed];
     [logPanel orderFront:self];
 }

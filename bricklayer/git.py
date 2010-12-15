@@ -49,6 +49,13 @@ class Git(object):
     def last_commit(self, branch='master'):
         return open(os.path.join(self.workdir, '.git', 'refs', 'heads', branch)).read()
 
+    def last_tag(self, tag_type):
+        tags = self.tags(tag_type)
+        check = []
+        for tag in tags:
+            check.append(map(int, tag.split('.')))
+        return "%d.%d.%d" % tuple(max(check))
+
     def tags(self, tag_type):
         try:
             git_cmd = self._exec_git(['git', 'tag', '-l'], stdout=subprocess.PIPE, cwd=self.workdir)

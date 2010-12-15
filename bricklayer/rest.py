@@ -96,7 +96,7 @@ class Project(cyclone.web.RequestHandler):
             self.write(cyclone.escape.json_encode("%s No project found" % e))
 
 
-    def delete(self, name, branch):
+    def delete(self, name):
         try:
             project = Projects(name)
             project.delete()
@@ -162,6 +162,10 @@ class Log(cyclone.web.RequestHandler):
         if os.path.isfile(build_info.log()):
             self.write(open(build_info.log()).read())
 
+class Main(cyclone.web.RequestHandler):
+    def get(self):
+        self.redirect('/static/index.html')
+
 
 restApp = cyclone.web.Application([
     (r'/project', Project),
@@ -171,5 +175,6 @@ restApp = cyclone.web.Application([
     (r'/log/(.*)/(.*)', Log),
     (r'/repository/(.*)', Repository),
     (r'/static/(.*)', cyclone.web.StaticFileHandler, {'path': os.path.join(os.path.dirname(__file__), '../static')}),
+    (r'/', Main),
 ])
 

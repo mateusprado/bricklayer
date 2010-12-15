@@ -29,6 +29,12 @@ class Projects:
         res = self.redis_cli.exists('project:%s' % self.name)
         return res
 
+    @transaction
+    def delete(self):
+        project_keys = self.redis_cli.keys("*%s*" % self.name)
+        for key in project_keys:
+            self.redis_cli.delete(key)
+
     def connect(self):
         return redis.Redis()
 
