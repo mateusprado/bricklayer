@@ -26,19 +26,19 @@ class BuildInfo:
     
     @transaction
     def time(self, version=''):
-        return self.redis_cli.get('build:%s:time' % self.build_id)
+        return self.redis_cli.get('build:%s:%s:time' % (self.project, self.build_id))
 
     @transaction
     def version(self, version=''):
         if version:
-            return self.redis_cli.set('build:%s:version' % (self.build_id), version) 
-        return self.redis_cli.get('build:%s:version' % (self.build_id))
+            return self.redis_cli.set('build:%s:%s:version' % (self.project, self.build_id), version) 
+        return self.redis_cli.get('build:%s:%s:version' % (self.project, self.build_id))
 
     @transaction
     def log(self, logfile=''):
         if logfile:
-            return self.redis_cli.set('build:%s:log' % (self.build_id), logfile) 
-        return self.redis_cli.get('build:%s:log' % (self.build_id))
+            return self.redis_cli.set('build:%s:%s:log' % (self.project, self.build_id), logfile) 
+        return self.redis_cli.get('build:%s:%s:log' % (self.project, self.build_id))
 
     @transaction
     def builds(self):

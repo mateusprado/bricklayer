@@ -136,8 +136,8 @@ class Builder:
                     self.project.last_tag(tag_type, self.git.last_tag(tag_type))
                     if self.project.last_tag(tag_type):
                         self.git.checkout_tag(self.project.last_tag(tag_type))
-                    self.package_builder.build(branch, self.project.last_tag(tag_type))
-                    self.package_builder.upload(tag_type)
+                        self.package_builder.build(branch, self.project.last_tag(tag_type))
+                        self.package_builder.upload(tag_type)
                     self.git.checkout_branch(branch)
 
         except Exception, e:
