@@ -1,3 +1,4 @@
+import os
 import ConfigParser
 
 class BrickConfigImpl:
@@ -10,10 +11,13 @@ class BrickConfigImpl:
     def get(self, section, name):
         return self.config_parse.get(section, name)
 
-#    def getFromFile(self, file, section, name):
-#        return self.config_parse.get(section, name)
-
 def BrickConfig(configfile=None):
+    if configfile == None:
+        if "BRICKLAYERCONFIG" in os.environ.keys():
+            configfile = os.environ['BRICKLAYERCONFIG']
+        else:
+            configfile = '/etc/bricklayer/bricklayer.ini'
+
     if not BrickConfigImpl._instance:
         BrickConfigImpl.config_file = configfile
         BrickConfigImpl._instance = BrickConfigImpl()

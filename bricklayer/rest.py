@@ -6,12 +6,16 @@ sys.path.append(os.path.dirname(__file__))
 from projects import Projects
 from builder import Builder
 from build_info import BuildInfo
+from config import BrickConfig
 
 import cyclone.web
 import cyclone.escape
 from twisted.internet import reactor
 from twisted.python import log
 from dreque import Dreque
+
+
+brickconfig = BrickConfig()
 
 _dreque = Dreque('127.0.0.1')
 
@@ -174,7 +178,7 @@ restApp = cyclone.web.Application([
     (r'/build/(.*)', Build),
     (r'/log/(.*)/(.*)', Log),
     (r'/repository/(.*)', Repository),
-    (r'/static/(.*)', cyclone.web.StaticFileHandler, {'path': os.path.join(os.path.dirname(__file__), '../static')}),
+    (r'/static/(.*)', cyclone.web.StaticFileHandler, {'path': brickconfig.get('static', 'dir')}),
     (r'/', Main),
 ])
 

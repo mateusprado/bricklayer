@@ -131,15 +131,13 @@ class Builder:
             
             branch = 'master'
             for tag_type in ('testing', 'stable'):
-                tags = self.git.tags(tag_type)
-                if len(tags) > 0:
-                    log.info('Last tag found: %s' % max(tags))
-                    if self.project.last_tag(tag_type=tag_type) != max(tags):
-                        self.project.last_tag(tag=max(tags), tag_type=tag_type)
-                        self.git.checkout_tag(self.project.last_tag(tag_type=tag_type))
-                        self.package_builder.build(branch, self.project.last_tag(tag_type=tag_type))
-                        self.package_builder.upload(tag_type)
-                        self.git.checkout_branch(branch)
+                log.info('Last tag found: %s' % self.git.last_tag(tag_type))
+                if self.project.last_tag(tag_type) != self.git.last_tag(tag_type):
+                    self.project.last_tag(tag_type, self.git.last_tag(tag_type))
+                    self.git.checkout_tag(self.project.last_tag(tag_type))
+                    self.package_builder.build(branch, self.project.last_tag(tag_type))
+                    self.package_builder.upload(tag_type)
+                    self.git.checkout_branch(branch)
 
 
         except Exception, e:
