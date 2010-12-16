@@ -139,7 +139,6 @@ class Builder:
                     self.package_builder.upload(tag_type)
                     self.git.checkout_branch(branch)
 
-
         except Exception, e:
             log.exception("build failed: %s" % repr(e))
 
