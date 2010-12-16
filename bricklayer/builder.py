@@ -131,7 +131,7 @@ class Builder:
             
             branch = 'master'
             for tag_type in ('testing', 'stable'):
-                log.info('Last tag found: %s' % self.git.last_tag(tag_type))
+                log.info('Last tag found: %s' % self.project.last_tag(tag_type))
                 if self.project.last_tag(tag_type) != self.git.last_tag(tag_type):
                     self.project.last_tag(tag_type, self.git.last_tag(tag_type))
                     if self.project.last_tag(tag_type):
