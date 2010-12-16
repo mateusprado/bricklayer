@@ -56,7 +56,7 @@ class Git(object):
             tag_v = tag.split('_')[1]
             check.append(map(int, tag_v.split('.')))
         if len(check) > 0:
-            return "%s_%d.%d.%d" % (tag_type, tuple(max(check)))
+            return tag_type + "_%d.%d.%d" % tuple(max(check))
         else:
             return ''
 
