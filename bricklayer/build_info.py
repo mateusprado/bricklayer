@@ -17,7 +17,7 @@ class BuildInfo:
         if project and build_id == 0:
             self.build_id = self.redis_cli.incr('build:%s' % project)
             self.redis_cli.rpush('build:%s:list' % project, self.build_id)
-            self.redis_cli.set('build:%s:time' % self.build_id, time.strftime('%d/%m/%Y %H:%M', time.localtime(time.time())))
+            self.redis_cli.set('build:%s:%s:time' % (self.project, self.build_id), time.strftime('%d/%m/%Y %H:%M', time.localtime(time.time())))
         if build_id > 0:
             self.build_id = build_id
 
