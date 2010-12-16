@@ -23,5 +23,6 @@ setup(
     [console_scripts]
     build_consumer = bricklayer.build_consumer:main
     """,
+    include_package_data = True,
     data_files=data_files_list
 )
