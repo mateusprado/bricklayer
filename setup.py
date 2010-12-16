@@ -9,12 +9,6 @@ for root, dirs, files in os.walk('pkg_template'):
         )
 
 
-for root, dirs, files in os.walk('static'):
-    if not dirs: 
-        template_dir.append((os.path.join('/var/lib/bricklayer/', root), 
-            map(lambda x: os.path.join(root, x), files))
-        )
-
 data_files_list = template_dir
 data_files_list.extend([
         ('/etc/bricklayer/', ['etc/bricklayer/bricklayer.ini',
