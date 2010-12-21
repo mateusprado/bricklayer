@@ -56,6 +56,15 @@ var htmlTemplate = nil;
 {
     // This is called when the application is done loading.
     [self getProjects];
+    var reloadTimer = [CPTimer scheduledTimerWithTimeInterval:30 target:self selector:@selector(dataReloader:) userInfo:self repeats:YES];
+}
+
+-(void)dataReloader:(id)sender
+{
+    if ([menuView selectedRow] > 0) {
+        [self getProjects];
+        [dataSource tableViewSelectionDidChange:[CPNotification notificationWithName:'menuView' object:menuView]];
+    }
 }
 
 -(void)getProjects
@@ -113,17 +122,25 @@ var htmlTemplate = nil;
 
 -(void)connection:(CPConnection)aConn didReceiveData:(CPString)data
 {
+    var selected = [menuView selectedRow];
+    
+    if (selected == null) {
+        selected = 1;
+    }
+
     dataSource = [TableDataSource alloc];
+
     [dataSource initWithData:[[CPData alloc] initWithRawString:data]];
     [dataSource setTarget:self];
     [menuView setDataSource:dataSource];
     [menuView setDelegate:dataSource];
 
-    [menuView selectRowIndexes:[CPIndexSet indexSetWithIndex:1] byExtendingSelection:NO];
+    [menuView selectRowIndexes:[CPIndexSet indexSetWithIndex:selected] byExtendingSelection:NO];
 }
 
 -(void)loadProject:(JSONObject)projectInfo
 {
+    console.log("load project");
     [projectLabel setStringValue:projectInfo["name"]]; 
     [repositoryField setStringValue:projectInfo["git_url"]];
     [versionField setStringValue:projectInfo["version"]];

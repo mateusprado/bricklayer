@@ -104,5 +104,9 @@
 	[aTableView reloadData];
 }
 
+- (void)compare:(id)sender
+{
+    console.log("compare");    
+}
 
 @end

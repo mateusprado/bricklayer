@@ -45,5 +45,19 @@ class BuildInfo:
         builds = self.redis_cli.lrange('build:%s:list' % self.project, 0, self.redis_cli.llen('build:%s:list' % self.project))
         return builds
 
+    @transaction
+    def building(self, is_building=None):
+        if is_building != None:
+            if is_building:
+                self.redis_cli.incr('build:%s:%s:status' % (self.project, self.build_id))
+            else:
+                self.redis_cli.decr('build:%s:%s:status' % (self.project, self.build_id))
+            return is_building
+        else:
+            if self.redis_cli.get('build:%s:%s:status' % (self.project, self.build_id)) > 0:
+                return True
+            else:
+                return False
+
     def connect(self):
         return redis.Redis()    
