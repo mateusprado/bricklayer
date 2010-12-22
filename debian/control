@@ -1,5 +1,5 @@
 Source: bricklayer
-Section: unknown
+Section: web
 Priority: extra
 Maintainer: root <root@debian.localdomain>
 Build-Depends: cdbs, debhelper (>= 7), python-twisted, build-essential, devscripts, python-setuptools
@@ -8,6 +8,6 @@ Homepage: http://github.com/locaweb/bricklayer
 
 Package: bricklayer
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, redis-server (>= 2)
+Depends: ${shlibs:Depends}, ${misc:Depends}, redis-server (>= 2), python-twisted, python-simplejson
 Description: Builds packages based on git tags or commits
  Bricklayer is a twisted application which watches your repository and builds debian packages for any change in tags or commits
