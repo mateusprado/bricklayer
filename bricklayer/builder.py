@@ -116,6 +116,7 @@ class Builder:
                     shutil.copytree(self.workdir, "%s-%s" % (self.workdir, branch))
                 self.workdir = "%s-%s" % (self.workdir, branch)
                 self.git.workdir = self.workdir
+                self.git.pull() 
                 self.git.checkout_branch(branch)
 
                 if build == 1:
