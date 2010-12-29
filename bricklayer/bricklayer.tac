@@ -14,11 +14,12 @@ from twisted.internet import protocol, task, threads, reactor
 from twisted.protocols import basic
 from twisted.python import log
 
-from builder import Builder
+from builder import Builder, build_project
 from projects import Projects
 from config import BrickConfig
 from rest import restApp
-from dreque import Dreque, DrequeWorker
+#from dreque import Dreque, DrequeWorker
+from hotqueue import HotQueue
 
 class BricklayerProtocol(basic.LineReceiver):
     def lineReceived(self, line):
@@ -50,8 +51,8 @@ class BricklayerFactory(protocol.ServerFactory):
     
     def send_job(self, project_name):
         log.msg('sched project: %s' % project_name)
-        dreque = Dreque('127.0.0.1')
-        dreque.enqueue('build', 'builder.build_project', project_name, None, False)
+        queue = HotQueue('build')
+        queue.put({'project': project_name, 'branch': None, 'force': False})
 
     def sched_builder(self):
         for project in Projects.get_all():

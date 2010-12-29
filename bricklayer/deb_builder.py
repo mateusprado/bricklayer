@@ -8,6 +8,7 @@ import stat
 import logging as log
 import subprocess
 import ftplib
+import pystache
 from urlparse import urlparse
 
 from projects import Projects

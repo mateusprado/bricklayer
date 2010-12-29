@@ -48,6 +48,11 @@ var htmlTemplate = nil;
     @outlet CPTextField lastStableTagValue;
     @outlet CPTextField lastCommitLabel;
     @outlet CPTextField lastCommitValue;
+
+    @outlet CPTextField repoUrl;
+    @outlet CPTextField repoUser;
+    @outlet CPTextField repoPasswd;
+
     var dataSource;
     var font;
 }
@@ -193,29 +198,56 @@ var htmlTemplate = nil;
         build_cmd = [addBuildCmd stringValue],
         install_cmd = [addInstallCmd stringValue],
         version = [addVersion stringValue];
+    
+    var repo_url = [repoUrl stringValue],
+        repo_user = [repoUser stringValue],
+        repo_passwd = [repoPasswd stringValue];
+    
+    var request = new CFHTTPRequest();
 
-    var postData = {'name': name, 'git_url': repository, 'branch': branch, 'version': version, 'build_cmd': build_cmd, 'install_cmd': install_cmd};
-    var postDict = [CPDictionary dictionaryWithJSObject:postData];
-    var keys = [postDict allKeys], k;
-    var body = "1=1";
-    var buildUrlRequest = [CPURLRequest requestWithURL:@"/project"];
-    var projectCreate = [ProjectCreate alloc];
+    if (name && repository && branch) {
+        var postData = {'name': name, 'git_url': repository, 'branch': branch, 'version': version, 'build_cmd': build_cmd, 'install_cmd': install_cmd};
+        var postDict = [CPDictionary dictionaryWithJSObject:postData];
+        var keys = [postDict allKeys], k;
+        var body = "1=1";
+        var buildUrlRequest = [CPURLRequest requestWithURL:@"/project"];
+        var projectCreate = [ProjectCreate alloc];
 
-    for (k = 0; k < [keys count]; k++) {
-        if ([postDict valueForKey:keys[k]] != '') {
-            body += "&" + keys[k] + "=" + [postDict valueForKey:keys[k]];
+        for (k = 0; k < [keys count]; k++) {
+            if ([postDict valueForKey:keys[k]] != '') {
+                body += "&" + keys[k] + "=" + [postDict valueForKey:keys[k]];
+            }
+        }
+
+        body += "\r\n";
+
+        [buildUrlRequest setHTTPMethod:"POST"];
+        [buildUrlRequest setHTTPBody:body];
+        [buildUrlRequest setValue:"application/x-www-form-urlencoded" forHTTPHeaderField:"Content-Type"];
+        
+        [projectCreate setMainClass:self];
+        
+        var connection = [CPURLConnection connectionWithRequest:buildUrlRequest delegate:projectCreate];
+
+        if (repo_url && repo_user && repo_passwd) {
+            request.open("POST", "/repository/" + name, false);
+            request.oncomplete = function()
+            {
+                if (request.success()) {
+                    [repoUrl setStringValue:""];    
+                    [repoUser setStringValue:""];    
+                    [repoPasswd setStringValue:""];    
+                }
+                    
+            }
+
+            request.send("repository_url="+repo_url+"&repository_user="+repo_user+"&repository_passwd="+repo_passwd+"\r\n");
+        
         }
     }
-
-    body += "\r\n";
-
-    [buildUrlRequest setHTTPMethod:"POST"];
-    [buildUrlRequest setHTTPBody:body];
-    [buildUrlRequest setValue:"application/x-www-form-urlencoded" forHTTPHeaderField:"Content-Type"];
-    
-    [projectCreate setMainClass:self];
-    
-    var connection = [CPURLConnection connectionWithRequest:buildUrlRequest delegate:projectCreate];
+    else {
+        [addPanel performClose:self];    
+    }
 }
 
 -(void)rowDoubleClicked:(id)sender

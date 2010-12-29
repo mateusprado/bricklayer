@@ -4,6 +4,7 @@ import subprocess
 import time
 import ConfigParser
 import shutil
+import logging
 
 sys.path.append(os.path.join(os.path.dirname(__file__), 'utils'))
 sys.path.append(os.path.dirname(__file__))
@@ -14,9 +15,8 @@ from config import BrickConfig
 from projects import Projects
 
 #from twisted.python import log
-from dreque import DrequeWorker
-
-import logging
+#from dreque import DrequeWorker
+from hotqueue import HotQueue
 
 from rpm_builder import RpmBuilder
 from deb_builder import DebBuilder
@@ -24,7 +24,13 @@ from deb_builder import DebBuilder
 logging.basicConfig(filename='/var/log/bricklayer-builder.log', level=logging.DEBUG)
 log = logging.getLogger('builder')
 
-def build_project(project, branch, force):
+queue = HotQueue('build')
+
+@queue.worker
+def build_project(kargs):
+    project, branch, force = kargs['project'], kargs['branch'], kargs['force']
+    logging.basicConfig(filename='/var/log/bricklayer-builder.log', level=logging.DEBUG)
+    log = logging.getLogger('builder-worker')
     log.debug("> %s %s %s" % (project, branch, force))
     config_file = '/etc/bricklayer/bricklayer.ini'
     
