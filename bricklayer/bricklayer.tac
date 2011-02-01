@@ -18,8 +18,7 @@ from builder import Builder, build_project
 from projects import Projects
 from config import BrickConfig
 from rest import restApp
-#from dreque import Dreque, DrequeWorker
-from hotqueue import HotQueue
+from dreque import Dreque, DrequeWorker
 
 class BricklayerProtocol(basic.LineReceiver):
     def lineReceived(self, line):
@@ -51,8 +50,9 @@ class BricklayerFactory(protocol.ServerFactory):
     
     def send_job(self, project_name):
         log.msg('sched project: %s' % project_name)
-        queue = HotQueue('build')
-        queue.put({'project': project_name, 'branch': None, 'force': False})
+        brickconfig = BrickConfig()
+        queue = Dreque(['build'], brickconfig.get('redis', 'redis-server'))
+        queue.enqueue('build', 'builder.build_project', {'project': project_name, 'branch': None, 'force': False})
 
     def sched_builder(self):
         for project in Projects.get_all():
@@ -62,15 +62,8 @@ class BricklayerFactory(protocol.ServerFactory):
         sched_task = task.LoopingCall(self.sched_builder)
         sched_task.start(200.0)
 
-if "BRICKLAYERCONFIG" in os.environ.keys():
-    configfile = os.environ['BRICKLAYERCONFIG']
-else:
-    configfile = '/etc/bricklayer/bricklayer.ini'
-
-brickconfig = BrickConfig(configfile)
-
+brickconfig = BrickConfig()
 bricklayer = service.MultiService()
-
 
 factory = BricklayerFactory()
 brickService = internet.TCPServer(8080, factory)

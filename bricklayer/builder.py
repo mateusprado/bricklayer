@@ -25,11 +25,6 @@ def build_project(kargs):
     logging.basicConfig(filename='/var/log/bricklayer-builder.log', level=logging.DEBUG)
     log = logging.getLogger('builder-worker')
     log.debug("> %s %s %s" % (project, branch, force))
-    config_file = '/etc/bricklayer/bricklayer.ini'
-    
-    if os.environ.has_key('BRICKLAYERCONFIG'):
-        config_file = os.environ['BRICKLAYERCONFIG']
-    BrickConfig(config_file)
 
     builder = Builder(project)
     builder.build_project(force, branch)
