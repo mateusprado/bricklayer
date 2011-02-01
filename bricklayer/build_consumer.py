@@ -11,7 +11,7 @@ from dreque import DrequeWorker
 def main():
     if os.path.isdir('/var/run'):
         pidfile = open('/var/run/build_consumer.pid', 'w')
-        pidfile.write(str(os.getppid()))
+        pidfile.write(str(os.getpid()))
         pidfile.close()
     brickconfig = BrickConfig()
     worker = DrequeWorker(['build'], brickconfig.get('redis', 'redis-server'))
