@@ -51,7 +51,7 @@ class BricklayerFactory(protocol.ServerFactory):
     def send_job(self, project_name):
         log.msg('sched project: %s' % project_name)
         brickconfig = BrickConfig()
-        queue = Dreque(['build'], brickconfig.get('redis', 'redis-server'))
+        queue = Dreque(brickconfig.get('redis', 'redis-server'))
         queue.enqueue('build', 'builder.build_project', {'project': project_name, 'branch': None, 'force': False})
 
     def sched_builder(self):
