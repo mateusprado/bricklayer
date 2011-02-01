@@ -14,19 +14,12 @@ import git
 from config import BrickConfig
 from projects import Projects
 
-#from twisted.python import log
-#from dreque import DrequeWorker
-from hotqueue import HotQueue
-
 from rpm_builder import RpmBuilder
 from deb_builder import DebBuilder
 
 logging.basicConfig(filename='/var/log/bricklayer-builder.log', level=logging.DEBUG)
 log = logging.getLogger('builder')
 
-queue = HotQueue('build')
-
-@queue.worker
 def build_project(kargs):
     project, branch, force = kargs['project'], kargs['branch'], kargs['force']
     logging.basicConfig(filename='/var/log/bricklayer-builder.log', level=logging.DEBUG)

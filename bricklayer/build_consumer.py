@@ -6,15 +6,12 @@ sys.path.append(os.path.dirname(bricklayer.__file__))
 
 from bricklayer.builder import build_project
 from bricklayer.config import BrickConfig
-#from dreque import DrequeWorker
+from dreque import DrequeWorker
 
 def main():
-    config_file = '/etc/bricklayer/bricklayer.ini'
-    if os.environ.has_key('BRICKLAYERCONFIG'):
-        config_file = os.environ['BRICKLAYERCONFIG']
-    BrickConfig(config_file)
-    
-    build_project() 
+    brickconfig = BrickConfig()
+    worker = DrequeWorker(['build'], brickconfig.get('redis', 'redis-server'))
+    worker.work()
 
 if __name__ == "__main__":
     main()

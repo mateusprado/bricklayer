@@ -12,12 +12,12 @@ import cyclone.web
 import cyclone.escape
 from twisted.internet import reactor
 from twisted.python import log
-from hotqueue import HotQueue
+from dreque import Dreque
 
 
 brickconfig = BrickConfig()
 
-queue = HotQueue('build')
+queue = Dreque(brickconfig.get('redis', 'redis-server'))
 
 class Project(cyclone.web.RequestHandler):
     def post(self, *args):
@@ -42,7 +42,7 @@ class Project(cyclone.web.RequestHandler):
                             self.request.arguments['repository_passwd'][0]
                         )
                 log.msg('Project created:', project.name)
-                reactor.callInThread(queue.put, {'project': project.name, 'branch': self.get_argument('branch'), 'force': True})
+                reactor.callInThread(queue.enqueue, 'build', 'builder.build_project', {'project': project.name, 'branch': self.get_argument('branch'), 'force': True})
             except Exception, e:
                 log.err()
                 self.write(cyclone.escape.json_encode({'status': "fail"}))
@@ -66,7 +66,7 @@ class Project(cyclone.web.RequestHandler):
         except Exception, e:
             log.err(e)
             self.finish(cyclone.escape.json_encode({'status': 'fail'}))
-        reactor.callInThread(queue.put, {'project': project.name, 'branch': self.get_argument('branch'), 'force': True})
+        reactor.callInThread(queue.enqueue, 'build', 'builder.build_project', {'project': project.name, 'branch': self.get_argument('branch'), 'force': True})
     
     def get(self, name='', branch='master'):
         try:
@@ -122,7 +122,7 @@ class Branch(cyclone.web.RequestHandler):
         else:
             project.add_branch(branch)
             project.version(branch, '0.1')
-            reactor.callInThread(queue.put, {'project': project.name, 'branch': self.get_argument('branch'), 'force': True})
+            reactor.callInThread(queue.enqueue, 'build', 'builder.build_project', {'project': project.name, 'branch': self.get_argument('branch'), 'force': True})
             self.write(cyclone.escape.json_encode({'status': 'ok'}))
 
     def delete(self, project_name):
@@ -135,7 +135,7 @@ class Build(cyclone.web.RequestHandler):
     def post(self, project_name):
         project = Projects(project_name)
         branch = self.get_argument('branch')
-        reactor.callInThread(queue.put, {'project': project.name, 'branch': self.get_argument('branch'), 'force': True})
+        reactor.callInThread(queue.enqueue, 'build', 'builder.build_project', {'project': project.name, 'branch': self.get_argument('branch'), 'force': True})
         self.write(cyclone.escape.json_encode({'status': 'build of branch %s scheduled' % branch}))
 
     def get(self, project_name):
@@ -165,6 +165,11 @@ class Log(cyclone.web.RequestHandler):
         build_info = BuildInfo(project, build)
         if os.path.isfile(build_info.log()):
             self.write(open(build_info.log()).read())
+
+class Check(cyclone.web.RequestHandler):
+    def post(self, project_name):
+        project = Projects(project_name)
+
 
 class Main(cyclone.web.RequestHandler):
     def get(self):
