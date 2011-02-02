@@ -16,6 +16,9 @@
 
 var htmlTemplate = nil;
 
+CPLogRegister(CPLogConsole);
+
+
 @implementation AppController : CPObject
 {
     CPWindow    theWindow; //this "outlet" is connected automatically by the Cib
@@ -114,12 +117,12 @@ var htmlTemplate = nil;
     [projectView setBackgroundColor:[CPColor colorWithHexString:@"DEE4EA"]]; 
 
     var build_column = [buildView tableColumnWithIdentifier:@"build"], 
-        descriptor = [CPSortDescriptor sortDescriptorWithKey:@"build" ascending:NO];
-    [build_column setSortDescriptorPrototype:descriptor];
+        descriptor_build = [CPSortDescriptor sortDescriptorWithKey:@"build" ascending:NO];
+    [build_column setSortDescriptorPrototype:descriptor_build];
 
     var date_column = [buildView tableColumnWithIdentifier:@"date"], 
-        descriptor = [CPSortDescriptor sortDescriptorWithKey:@"date" ascending:NO];
-    [date_column setSortDescriptorPrototype:descriptor];
+        descriptor_date = [CPSortDescriptor sortDescriptorWithKey:@"date" ascending:NO];
+    [date_column setSortDescriptorPrototype:descriptor_date];
     
     [buildView setUsesAlternatingRowBackgroundColors:YES];
     [buildView setDoubleAction:@selector(rowDoubleClicked:)];
@@ -280,4 +283,5 @@ var htmlTemplate = nil;
     [logView loadHTMLString:htmlParsed];
     [logPanel orderFront:self];
 }
+
 @end

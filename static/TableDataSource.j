@@ -98,6 +98,7 @@
 
 - (void)tableView:(CPTableView)aTableView sortDescriptorsDidChange:(CPArray)oldDescriptors
 {
+    console.log("sort");
     var newDescriptors = [aTableView sortDescriptors];
     [tbData sortUsingDescriptors:newDescriptors];
 
@@ -106,7 +107,7 @@
 
 - (void)compare:(id)sender
 {
-    console.log("compare");    
+    console.log("compare");
 }
 
 @end

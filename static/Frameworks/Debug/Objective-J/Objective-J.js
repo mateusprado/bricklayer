@@ -219,10 +219,10 @@ exports.sprintf = function(format)
             return result;
         }
         index += t.length;
-        if (t.charAt(0) != "%")
-        {
+        if (t.charAt(0) !== "%")
             result += t;
-        }
+        else if (t === "%%")
+            result += "%";
         else
         {
             var subtokens = t.match(tagRegex);
@@ -1065,6 +1065,21 @@ var XML_XML = "xml",
     PLIST_NUMBER_REAL = "real",
     PLIST_NUMBER_INTEGER = "integer",
     PLIST_DATA = "data";
+var textContent = function(nodes)
+{
+    var text = "",
+        index = 0,
+        count = nodes.length;
+    for (; index < count; ++index)
+    {
+        var node = nodes[index];
+        if (node.nodeType === 3 || node.nodeType === 4)
+            text += node.nodeValue;
+        else if (node.nodeType !== 8)
+            text += textContent(node.childNodes);
+    }
+    return text;
+}
 var _plist_traverseNextNode = function(anXMLNode, stayWithin, stack)
 {
     var node = anXMLNode;
@@ -1220,7 +1235,7 @@ CFPropertyList.propertyListFromXML = function( aStringOrXMLNode)
             currentContainer = containers[count - 1];
         if ((String(XMLNode.nodeName)) === PLIST_KEY)
         {
-            key = ((String((XMLNode.firstChild).nodeValue)));
+            key = (XMLNode.textContent || (XMLNode.textContent !== "" && textContent([XMLNode])));
             while ((XMLNode = (XMLNode.nextSibling)) && ((XMLNode.nodeType) === 8 || (XMLNode.nodeType) === 3)) ;;
         }
         switch (String((String(XMLNode.nodeName))))
@@ -1231,21 +1246,21 @@ CFPropertyList.propertyListFromXML = function( aStringOrXMLNode)
             case PLIST_DICTIONARY: object = new CFMutableDictionary();
                                         containers.push(object);
                                         break;
-            case PLIST_NUMBER_REAL: object = parseFloat(((String((XMLNode.firstChild).nodeValue))));
+            case PLIST_NUMBER_REAL: object = parseFloat((XMLNode.textContent || (XMLNode.textContent !== "" && textContent([XMLNode]))));
                                         break;
-            case PLIST_NUMBER_INTEGER: object = parseInt(((String((XMLNode.firstChild).nodeValue))), 10);
+            case PLIST_NUMBER_INTEGER: object = parseInt((XMLNode.textContent || (XMLNode.textContent !== "" && textContent([XMLNode]))), 10);
                                         break;
             case PLIST_STRING: if ((XMLNode.getAttribute("type") === "base64"))
-                                            object = (XMLNode.firstChild) ? CFData.decodeBase64ToString(((String((XMLNode.firstChild).nodeValue)))) : "";
+                                            object = (XMLNode.firstChild) ? CFData.decodeBase64ToString((XMLNode.textContent || (XMLNode.textContent !== "" && textContent([XMLNode])))) : "";
                                         else
-                                            object = decodeHTMLComponent((XMLNode.firstChild) ? ((String((XMLNode.firstChild).nodeValue))) : "");
+                                            object = decodeHTMLComponent((XMLNode.firstChild) ? (XMLNode.textContent || (XMLNode.textContent !== "" && textContent([XMLNode]))) : "");
                                         break;
             case PLIST_BOOLEAN_TRUE: object = YES;
                                         break;
             case PLIST_BOOLEAN_FALSE: object = NO;
                                         break;
             case PLIST_DATA: object = new CFMutableData();
-                                        object.bytes = (XMLNode.firstChild) ? CFData.decodeBase64ToArray(((String((XMLNode.firstChild).nodeValue))), YES) : [];
+                                        object.bytes = (XMLNode.firstChild) ? CFData.decodeBase64ToArray((XMLNode.textContent || (XMLNode.textContent !== "" && textContent([XMLNode]))), YES) : [];
                                         break;
             default: throw new Error("*** " + (String(XMLNode.nodeName)) + " tag not recognized in Plist.");
         }
@@ -3964,13 +3979,15 @@ objj_method.displayName = "objj_method";
 objj_class = function(displayName)
 {
     this.isa = NULL;
+    this.version = 0;
     this.super_class = NULL;
     this.sub_classes = [];
     this.name = NULL;
     this.info = 0;
-    this.ivars = [];
+    this.ivar_list = [];
+    this.ivar_store = function() { };
+    this.ivar_dtable = this.ivar_store.prototype;
     this.method_list = [];
-    this.method_hash = {};
     this.method_store = function() { };
     this.method_dtable = this.method_store.prototype;
     eval("this.allocator = function " + (displayName || "OBJJ_OBJECT").replace(/\W/g, "_") + "() { }");
@@ -4015,7 +4032,9 @@ class_addIvar = function( aClass, aName, aType)
     var thePrototype = aClass.allocator.prototype;
     if (typeof thePrototype[aName] != "undefined")
         return NO;
-    aClass.ivars.push(new objj_ivar(aName, aType));
+    var ivar = new objj_ivar(aName, aType);
+    aClass.ivar_list.push(ivar);
+    aClass.ivar_dtable[aName] = ivar;
     thePrototype[aName] = NULL;
     return YES;
 }
@@ -4031,7 +4050,8 @@ class_addIvars = function( aClass, ivars)
             name = ivar.name;
         if (typeof thePrototype[name] === "undefined")
         {
-            aClass.ivars.push(ivar);
+            aClass.ivar_list.push(ivar);
+            aClass.ivar_dtable[name] = ivar;
             thePrototype[name] = NULL;
         }
     }
@@ -4039,13 +4059,11 @@ class_addIvars = function( aClass, ivars)
 class_addIvars.displayName = "class_addIvars";
 class_copyIvarList = function( aClass)
 {
-    return aClass.ivars.slice(0);
+    return aClass.ivar_list.slice(0);
 }
 class_copyIvarList.displayName = "class_copyIvarList";
 class_addMethod = function( aClass, aName, anImplementation, types)
 {
-    if (aClass.method_hash[aName])
-        return NO;
     var method = new objj_method(aName, anImplementation, types);
     aClass.method_list.push(method);
     aClass.method_dtable[aName] = method;
@@ -4064,8 +4082,6 @@ class_addMethods = function( aClass, methods)
     for (; index < count; ++index)
     {
         var method = methods[index];
-        if (aClass.method_hash[method.name])
-            continue;
         method_list.push(method);
         method_dtable[method.name] = method;
         method.method_imp.displayName = (((aClass.info & (CLS_META))) ? '+' : '-') + " [" + class_getName(aClass) + ' ' + method_getName(method) + ']';
@@ -4082,6 +4098,14 @@ class_getInstanceMethod = function( aClass, aSelector)
     return method ? method : NULL;
 }
 class_getInstanceMethod.displayName = "class_getInstanceMethod";
+class_getInstanceVariable = function( aClass, aName)
+{
+    if (!aClass || !aName)
+        return NULL;
+    var variable = aClass.ivar_dtable[aName];
+    return variable;
+}
+class_getInstanceVariable.displayName = "class_getInstanceVariable";
 class_getClassMethod = function( aClass, aSelector)
 {
     if (!aClass || !aSelector)
@@ -4100,6 +4124,16 @@ class_copyMethodList = function( aClass)
     return aClass.method_list.slice(0);
 }
 class_copyMethodList.displayName = "class_copyMethodList";
+class_getVersion = function( aClass)
+{
+    return aClass.version;
+}
+class_getVersion.displayName = "class_getVersion";
+class_setVersion = function( aClass, aVersion)
+{
+    aClass.version = parseInt(aVersion, 10);
+}
+class_setVersion.displayName = "class_setVersion";
 class_replaceMethod = function( aClass, aSelector, aMethodImplementation)
 {
     if (!aClass || !aSelector)
@@ -4148,10 +4182,9 @@ objj_allocateClassPair = function( superclass, aName)
         while (rootClassObject.superclass)
             rootClassObject = rootClassObject.superclass;
         classObject.allocator.prototype = new superclass.allocator;
-        classObject.method_store.prototype = new superclass.method_store;
-        classObject.method_dtable = classObject.method_store.prototype;
-        metaClassObject.method_store.prototype = new superclass.isa.method_store;
-        metaClassObject.method_dtable = metaClassObject.method_store.prototype;
+        classObject.ivar_dtable = classObject.ivar_store.prototype = new superclass.ivar_store;
+        classObject.method_dtable = classObject.method_store.prototype = new superclass.method_store;
+        metaClassObject.method_dtable = metaClassObject.method_store.prototype = new superclass.isa.method_store;
         classObject.super_class = superclass;
         metaClassObject.super_class = superclass.isa;
     }
@@ -4202,7 +4235,7 @@ class_createInstance = function( aClass)
             actualClass = theClass;
         while (theClass)
         {
-            var ivars = theClass.ivars,
+            var ivars = theClass.ivar_list,
                 count = ivars.length;
             while (count--)
                 object[ivars[count].name] = NULL;
