@@ -87,8 +87,8 @@ CPLogRegister(CPLogConsole);
 {
     // This is called when the cib is done loading.
     // You can implement this method on any object instantiated from a Cib.
-    // It's a useful hook for setting up current UI values, and other things. 
-    
+    // It's a useful hook for setting up current UI values, and other things.
+
     // In this case, we want the window from Cib to become our full browser window
     [theWindow setFullBridge:YES];
 
@@ -101,29 +101,33 @@ CPLogRegister(CPLogConsole);
     [font setFontAttrs:lastTestingTagLabel isTitle:NO];
     [font setFontAttrs:lastStableTagLabel isTitle:NO];
     [font setFontAttrs:lastCommitLabel isTitle:NO];
-   
+
     [repositoryField setDelegate:self];
     [branchField setDelegate:self];
     [versionField setDelegate:self];
 
     var column = [menuView tableColumnWithIdentifier:@"name"];
     var columnView = [column dataView];
-    
-    [font setMenuFontAttrs:columnView]; 
+
+    [font setMenuFontAttrs:columnView];
 
     [column setDataView:columnView];
 
-    [menuView setBackgroundColor:[CPColor colorWithHexString:@"DEE4EA"]]; 
-    [projectView setBackgroundColor:[CPColor colorWithHexString:@"DEE4EA"]]; 
+    [menuView setBackgroundColor:[CPColor colorWithHexString:@"DEE4EA"]];
+    [projectView setBackgroundColor:[CPColor colorWithHexString:@"DEE4EA"]];
 
-    var build_column = [buildView tableColumnWithIdentifier:@"build"], 
-        descriptor_build = [CPSortDescriptor sortDescriptorWithKey:@"build" ascending:NO];
+    var build_column = [buildView tableColumnWithIdentifier:@"build"],
+        descriptor_build = [CPSortDescriptor sortDescriptorWithKey:@"build" ascending:YES];
     [build_column setSortDescriptorPrototype:descriptor_build];
 
-    var date_column = [buildView tableColumnWithIdentifier:@"date"], 
+    var date_column = [buildView tableColumnWithIdentifier:@"date"],
         descriptor_date = [CPSortDescriptor sortDescriptorWithKey:@"date" ascending:NO];
     [date_column setSortDescriptorPrototype:descriptor_date];
-    
+
+    var version_column = [buildView tableColumnWithIdentifier:@"version"],
+        descriptor_version = [CPSortDescriptor sortDescriptorWithKey:@"version" ascending:NO];
+    [version_column setSortDescriptorPrototype:descriptor_version];
+
     [buildView setUsesAlternatingRowBackgroundColors:YES];
     [buildView setDoubleAction:@selector(rowDoubleClicked:)];
 }
@@ -131,8 +135,8 @@ CPLogRegister(CPLogConsole);
 -(void)connection:(CPConnection)aConn didReceiveData:(CPString)data
 {
     var selected = [menuView selectedRow];
-    
-    if (selected == null) {
+    console.log(selected);
+    if (selected == -1) {
         selected = 1;
     }
 
@@ -149,7 +153,7 @@ CPLogRegister(CPLogConsole);
 -(void)loadProject:(JSONObject)projectInfo
 {
     console.log("load project");
-    [projectLabel setStringValue:projectInfo["name"]]; 
+    [projectLabel setStringValue:projectInfo["name"]];
     [repositoryField setStringValue:projectInfo["git_url"]];
     [versionField setStringValue:projectInfo["version"]];
     [branchField setStringValue:projectInfo["branch"]];
@@ -163,7 +167,7 @@ CPLogRegister(CPLogConsole);
     var buildUrlRequest = [CPURLRequest requestWithURL:@"/build/" + projectInfo["name"]];
     [buildUrlRequest setHTTPMethod:"GET"];
     var connection = [CPURLConnection connectionWithRequest:buildUrlRequest delegate:buildsDataSource];
-    
+
     [buildView setDataSource:buildsDataSource];
     [buildView setDelegate:buildsDataSource];
 
@@ -174,7 +178,7 @@ CPLogRegister(CPLogConsole);
     var changedValue = [[sender object] stringValue];
     var textField = [sender object];
     var request = new CFHTTPRequest();
-    
+
     request.open("PUT", "/project/" + [projectLabel stringValue], false);
     request.oncomplete = function()
     {
@@ -201,11 +205,11 @@ CPLogRegister(CPLogConsole);
         build_cmd = [addBuildCmd stringValue],
         install_cmd = [addInstallCmd stringValue],
         version = [addVersion stringValue];
-    
+
     var repo_url = [repoUrl stringValue],
         repo_user = [repoUser stringValue],
         repo_passwd = [repoPasswd stringValue];
-    
+
     var request = new CFHTTPRequest();
 
     if (name && repository && branch) {
@@ -227,9 +231,9 @@ CPLogRegister(CPLogConsole);
         [buildUrlRequest setHTTPMethod:"POST"];
         [buildUrlRequest setHTTPBody:body];
         [buildUrlRequest setValue:"application/x-www-form-urlencoded" forHTTPHeaderField:"Content-Type"];
-        
+
         [projectCreate setMainClass:self];
-        
+
         var connection = [CPURLConnection connectionWithRequest:buildUrlRequest delegate:projectCreate];
 
         if (repo_url && repo_user && repo_passwd) {
@@ -237,19 +241,19 @@ CPLogRegister(CPLogConsole);
             request.oncomplete = function()
             {
                 if (request.success()) {
-                    [repoUrl setStringValue:""];    
-                    [repoUser setStringValue:""];    
-                    [repoPasswd setStringValue:""];    
+                    [repoUrl setStringValue:""];
+                    [repoUser setStringValue:""];
+                    [repoPasswd setStringValue:""];
                 }
-                    
-            }
 
+            }
+            request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
             request.send("repository_url="+repo_url+"&repository_user="+repo_user+"&repository_passwd="+repo_passwd+"\r\n");
-        
+
         }
     }
     else {
-        [addPanel performClose:self];    
+        [addPanel performClose:self];
     }
 }
 

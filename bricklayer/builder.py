@@ -88,6 +88,7 @@ class Builder:
                 try:
                     if os.path.isdir(self.git.workdir):
                         self.git.pull()
+                        self.git.checkout_branch(branch)
                     else:
                         self.git.clone(branch)
                 except Exception, e:

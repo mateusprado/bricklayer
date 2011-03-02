@@ -8380,7 +8380,7 @@ class_addMethods(the_class, [new objj_method(sel_getUid("initWithObjects:count:"
 }
 objj_executeFile("CPKeyValueObserving.j", YES);
 
-p;21;CPKeyValueObserving.jt;42737;@STATIC;1.0;i;9;CPArray.ji;14;CPDictionary.ji;13;CPException.ji;8;CPNull.ji;10;CPObject.ji;7;CPSet.ji;13;CPArray+KVO.ji;11;CPSet+KVO.jt;42595;objj_executeFile("CPArray.j", YES);
+p;21;CPKeyValueObserving.jt;42790;@STATIC;1.0;i;9;CPArray.ji;14;CPDictionary.ji;13;CPException.ji;8;CPNull.ji;10;CPObject.ji;7;CPSet.ji;13;CPArray+KVO.ji;11;CPSet+KVO.jt;42648;objj_executeFile("CPArray.j", YES);
 objj_executeFile("CPDictionary.j", YES);
 objj_executeFile("CPException.j", YES);
 objj_executeFile("CPNull.j", YES);
@@ -8581,6 +8581,7 @@ class_addMethods(the_class, [new objj_method(sel_getUid("initWithTarget:"), func
 {
     if (objj_msgSend(_replacedKeys, "containsObject:", aKey) || !objj_msgSend(_nativeClass, "automaticallyNotifiesObserversForKey:", aKey))
         return;
+    objj_msgSend(_replacedKeys, "addObject:", aKey);
     var theClass = _nativeClass,
         KVOClass = _targetObject.isa,
         capitalizedKey = aKey.charAt(0).toUpperCase() + aKey.substring(1);

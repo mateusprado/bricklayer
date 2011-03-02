@@ -13,7 +13,7 @@
 
 - (void)setTarget:(id)target
 {
-    _target = target;    
+    _target = target;
 }
 
 - (CPInteger)numberOfRowsInTableView:(id)sender
@@ -25,14 +25,14 @@
 - (CPInteger)tableView:(id)aTableView objectValueForTableColumn:(id)tableColumn row:(id)aRow
 {
     if (aRow == 0) {
-        return "PROJECTS";    
+        return "PROJECTS";
     }
     return tbData[aRow - 1][[tableColumn identifier]];
 }
 
 - (BOOL)tableView:(CPTableView)aTableView isGroupRow:(int)aRow
 {
-    return aRow === 0;    
+    return aRow === 0;
 }
 
 - (void)tableViewSelectionDidChange:(id)notification
@@ -47,7 +47,7 @@
        return NO;
     }
     else {
-        return YES;    
+        return YES;
     }
 }
 
@@ -60,14 +60,17 @@
 
 @implementation BuildsDataSource: CPObject
 {
-    JSONObject tbData;
+    CPDictionary tbData;
     id tableView;
 }
 
 -(void)connection:(CPConnection)aConn didReceiveData:(CPString)data
 {
-    var cpdata = [[CPData alloc] initWithRawString:data];
-    tbData = [cpdata JSONObject];
+    tbData = [];
+    var cpData = [[[CPData alloc] initWithRawString:data] JSONObject];
+    for (i = 0; i < cpData.length; i++) {
+        tbData[i] = [CPDictionary dictionaryWithJSObject:cpData[i] recursively:NO];
+    }
     [tableView reloadData];
 }
 
@@ -78,12 +81,12 @@
 
 - (void)setTableView:(id)view
 {
-    tableView = view;    
+    tableView = view;
 }
 
 - (CPInteger)tableView:(id)aTableView objectValueForTableColumn:(id)tableColumn row:(id)aRow
 {
-    return tbData[aRow][[tableColumn identifier]];
+    return [tbData[aRow] objectForKey:[tableColumn identifier]];
 }
 
 - (void)tableViewSelectionDidChange:(id)notification
@@ -93,7 +96,7 @@
 
 - (BOOL)tableView:(CPTableView)aTableView shouldSelectRow:(int)aRow
 {
-        return YES;    
+        return YES;
 }
 
 - (void)tableView:(CPTableView)aTableView sortDescriptorsDidChange:(CPArray)oldDescriptors
@@ -101,13 +104,7 @@
     console.log("sort");
     var newDescriptors = [aTableView sortDescriptors];
     [tbData sortUsingDescriptors:newDescriptors];
-
 	[aTableView reloadData];
-}
-
-- (void)compare:(id)sender
-{
-    console.log("compare");
 }
 
 @end
