@@ -260,7 +260,7 @@ CPLogRegister(CPLogConsole);
 -(void)rowDoubleClicked:(id)sender
 {
     var delegate = [sender delegate];
-    var rowData = [delegate.tbData[[sender selectedRow]]][0];
+    var rowData = [delegate.tbData[[sender selectedRow]]];
     var request = new CFHTTPRequest();
     var project = [projectLabel stringValue];
     var build_log = "";
@@ -271,10 +271,9 @@ CPLogRegister(CPLogConsole);
         if (request.success())
             htmlTemplate = request.responseText();
     }
-
     request.send("");
-
-    request.open("GET", "/log/" + project + "/" + rowData['build'], false);
+    
+    request.open("GET", "/log/" + project + "/" + [rowData valueForKey:'build'], false);
     request.oncomplete = function()
     {
         if (request.success())
