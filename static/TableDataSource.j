@@ -71,6 +71,7 @@
     for (i = 0; i < cpData.length; i++) {
         tbData[i] = [CPDictionary dictionaryWithJSObject:cpData[i] recursively:NO];
     }
+    [tbData sortUsingDescriptors:[[CPSortDescriptor sortDescriptorWithKey:@"build" ascending:NO]]];
     [tableView reloadData];
 }
 

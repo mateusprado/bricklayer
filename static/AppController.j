@@ -117,7 +117,7 @@ CPLogRegister(CPLogConsole);
     [projectView setBackgroundColor:[CPColor colorWithHexString:@"DEE4EA"]];
 
     var build_column = [buildView tableColumnWithIdentifier:@"build"],
-        descriptor_build = [CPSortDescriptor sortDescriptorWithKey:@"build" ascending:YES];
+        descriptor_build = [CPSortDescriptor sortDescriptorWithKey:@"build" ascending:NO];
     [build_column setSortDescriptorPrototype:descriptor_build];
 
     var date_column = [buildView tableColumnWithIdentifier:@"date"],
