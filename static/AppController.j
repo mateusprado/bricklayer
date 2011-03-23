@@ -121,7 +121,7 @@ CPLogRegister(CPLogConsole);
     [build_column setSortDescriptorPrototype:descriptor_build];
 
     var date_column = [buildView tableColumnWithIdentifier:@"date"],
-        descriptor_date = [CPSortDescriptor sortDescriptorWithKey:@"date" ascending:NO];
+        descriptor_date = [CPSortDescriptor sortDescriptorWithKey:@"date" ascending:YES];
     [date_column setSortDescriptorPrototype:descriptor_date];
 
     var version_column = [buildView tableColumnWithIdentifier:@"version"],

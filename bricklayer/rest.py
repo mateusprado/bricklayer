@@ -144,7 +144,7 @@ class Build(cyclone.web.RequestHandler):
         builds = []
         for bid in build_ids:
             build = BuildInfo(project, bid)
-            builds.append({'build': bid, 'log': os.path.basename(build.log()), 'version': build.version(), 'date': build.time()})
+            builds.append({'build': int(bid), 'log': os.path.basename(build.log()), 'version': build.version(), 'date': build.time()})
         self.write(cyclone.escape.json_encode(builds))
 
 class Repository(cyclone.web.RequestHandler):
@@ -185,6 +185,7 @@ restApp = cyclone.web.Application([
     (r'/log/(.*)/(.*)', Log),
     (r'/repository/(.*)', Repository),
     (r'/static/(.*)', cyclone.web.StaticFileHandler, {'path': brickconfig.get('static', 'dir')}),
+    (r'/repo/(.*)', cyclone.web.StaticFileHandler, {'path': brickconfig.get('workspace', 'dir')}),
     (r'/', Main),
 ])
 

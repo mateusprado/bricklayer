@@ -30,6 +30,9 @@ POST /project:
   branch="master"  # Branch to follow
   build_cmd="make"  # Command within your project that generate binaries or prepare your project to be installed
   install_cmd="make install PREFIX=debian/tmp" # A command within your project that install the generated binaries
+  respository_url="ftp.location.com" # A ftp package repository that your package will be uploaded
+  repository_user="a_user" # ftp user for this repository
+  repository_passwd="a_g00dP455w0rd" # needless to explain
 
 GET /project/project_name:
   Return the attributes of the project in JSON format

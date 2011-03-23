@@ -18,7 +18,6 @@
 
 - (CPInteger)numberOfRowsInTableView:(id)sender
 {
-    console.log(tbData);
     return [tbData count] + 1;
 }
 
@@ -87,6 +86,7 @@
 
 - (CPInteger)tableView:(id)aTableView objectValueForTableColumn:(id)tableColumn row:(id)aRow
 {
+
     return [tbData[aRow] objectForKey:[tableColumn identifier]];
 }
 
@@ -102,7 +102,6 @@
 
 - (void)tableView:(CPTableView)aTableView sortDescriptorsDidChange:(CPArray)oldDescriptors
 {
-    console.log("sort");
     var newDescriptors = [aTableView sortDescriptors];
     [tbData sortUsingDescriptors:newDescriptors];
 	[aTableView reloadData];
