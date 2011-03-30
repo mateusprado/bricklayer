@@ -2,13 +2,13 @@
 
 @implementation TableDataSource: CPObject
 {
-    JSONObject tbData;
+    CPDictionary tbData;
     id _target;
 }
 
 - (void)initWithData:(CPData)data
 {
-    tbData = [data JSONObject];
+    tbData = data;
 }
 
 - (void)setTarget:(id)target
@@ -26,7 +26,7 @@
     if (aRow == 0) {
         return "PROJECTS";
     }
-    return tbData[aRow - 1][[tableColumn identifier]];
+    return [tbData[aRow - 1] objectForKey:[tableColumn identifier]];
 }
 
 - (BOOL)tableView:(CPTableView)aTableView isGroupRow:(int)aRow

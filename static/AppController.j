@@ -121,7 +121,7 @@ CPLogRegister(CPLogConsole);
     [build_column setSortDescriptorPrototype:descriptor_build];
 
     var date_column = [buildView tableColumnWithIdentifier:@"date"],
-        descriptor_date = [CPSortDescriptor sortDescriptorWithKey:@"date" ascending:YES];
+        descriptor_date = [CPSortDescriptor sortDescriptorWithKey:@"date" ascending:NO];
     [date_column setSortDescriptorPrototype:descriptor_date];
 
     var version_column = [buildView tableColumnWithIdentifier:@"version"],
@@ -130,19 +130,36 @@ CPLogRegister(CPLogConsole);
 
     [buildView setUsesAlternatingRowBackgroundColors:YES];
     [buildView setDoubleAction:@selector(rowDoubleClicked:)];
+
+    var menu_column = [menuView tableColumnWithIdentifier:@"name"],
+        descriptor_menu = [CPSortDescriptor sortDescriptorWithKey:@"name" ascending:YES];
+    [menu_column setSortDescriptorPrototype:descriptor_menu];
+
 }
 
 -(void)connection:(CPConnection)aConn didReceiveData:(CPString)data
 {
+    var cpData, tbData;
     var selected = [menuView selectedRow];
-    console.log(selected);
+
     if (selected == -1) {
         selected = 1;
     }
 
     dataSource = [TableDataSource alloc];
 
-    [dataSource initWithData:[[CPData alloc] initWithRawString:data]];
+    //[dataSource initWithData:[[CPData alloc] initWithRawString:data]];
+    
+    cpData = [[[CPData alloc] initWithRawString:data] JSONObject];
+    tbData = [];
+
+    for (var i = 0; i < cpData.length; i++) {
+        tbData[i] = [CPDictionary dictionaryWithJSObject:cpData[i] recursively:NO];
+    }
+
+    [tbData sortUsingDescriptors:[[CPSortDescriptor sortDescriptorWithKey:@"name" ascending:NO]]];
+    
+    [dataSource initWithData:tbData];
     [dataSource setTarget:self];
     [menuView setDataSource:dataSource];
     [menuView setDelegate:dataSource];
@@ -152,19 +169,18 @@ CPLogRegister(CPLogConsole);
 
 -(void)loadProject:(JSONObject)projectInfo
 {
-    console.log("load project");
-    [projectLabel setStringValue:projectInfo["name"]];
-    [repositoryField setStringValue:projectInfo["git_url"]];
-    [versionField setStringValue:projectInfo["version"]];
-    [branchField setStringValue:projectInfo["branch"]];
-    [lastTestingTagValue setStringValue:projectInfo["last_tag_testing"]];
-    [lastStableTagValue setStringValue:projectInfo["last_tag_stable"]];
-    [lastCommitValue setStringValue:projectInfo["last_commit"]];
+    [projectLabel setStringValue:[projectInfo objectForKey:"name"]];
+    [repositoryField setStringValue:[projectInfo objectForKey:"git_url"]];
+    [versionField setStringValue:[projectInfo objectForKey:"version"]];
+    [branchField setStringValue:[projectInfo objectForKey:"branch"]];
+    [lastTestingTagValue setStringValue:[projectInfo objectForKey:"last_tag_testing"]];
+    [lastStableTagValue setStringValue:[projectInfo objectForKey:"last_tag_stable"]];
+    [lastCommitValue setStringValue:[projectInfo objectForKey:"last_commit"]];
 
     var buildsDataSource = [BuildsDataSource alloc];
     [buildsDataSource setTableView:buildView];
 
-    var buildUrlRequest = [CPURLRequest requestWithURL:@"/build/" + projectInfo["name"]];
+    var buildUrlRequest = [CPURLRequest requestWithURL:@"/build/" + [projectInfo objectForKey:"name"]];
     [buildUrlRequest setHTTPMethod:"GET"];
     var connection = [CPURLConnection connectionWithRequest:buildUrlRequest delegate:buildsDataSource];
 

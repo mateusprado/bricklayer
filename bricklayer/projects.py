@@ -5,6 +5,8 @@ def transaction(method):
         args[0].redis_cli = args[0].connect()
         ret = method(*args, **kwargs)
         args[0].redis_cli.connection.disconnect()
+        if ret == None:
+            ret = ""
         return ret
     return new
 
