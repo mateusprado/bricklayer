@@ -1,0 +1,23 @@
+{{#details}}
+<span class="project-details"><strong class="project-details">last commit:</strong> {{ last_commit }}</span>
+    <table id="build-table" class="tablesorter">
+    <thead>
+        <tr>
+            <th>Date</td>
+            <th>Version</td>
+            <th>Build #</td>
+            <th>Log</td>
+        </tr>
+    </thead>
+    <tbody>
+        {{#builds}}
+        <tr>
+            <td> {{date}} </td>
+            <td> {{version}} </td>
+            <td> {{build}} </td>
+            <td class="build-log"> <a id="build-log-show" build_id="{{build}}" href="#">{{log}}</a></td>
+        </tr>
+        {{/builds}}
+    </tbody>
+</table>
+{{/details}}

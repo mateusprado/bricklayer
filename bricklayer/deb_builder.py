@@ -98,21 +98,14 @@ class DebBuilder():
 
         else:
             """
-            otherwise it should change the package name to something that can differ from the stable version
-            like appending -branch to the package name by changing its control file
+            otherwise it should change the distribution to unstable
             """
-            control = os.path.join(self.builder.workdir, 'debian', 'control')
-            if os.path.isfile(control):
-                control_data_original = open(control).read()
-                control_data_new = control_data_original.replace(self.project.name, "%s-%s" % (self.project.name, branch))
-                open(control, 'w').write(control_data_new)
-            
+            changelog_data.update({'version': self.project.version('testing'), 'branch': 'unstable'})
             if self.project.version(branch):
                 version_list = self.project.version(branch).split('.')
                 version_list[len(version_list) - 1] = str(int(version_list[len(version_list) - 1]) + 1)
                 self.project.version(branch, '.'.join(version_list))
 
-            changelog_data.update({'version': self.project.version(branch), 'name': "%s-%s" % (self.project.name, branch), 'branch': 'testing'})
             self.build_info.version(self.project.version(branch))
 
         open(os.path.join(self.builder.workdir, 'debian', 'changelog'), 'w').write(changelog_entry % changelog_data)
@@ -169,10 +162,7 @@ class DebBuilder():
         clean_cmd.wait()
 
     def upload(self, branch):
-        if branch in ('stable', 'testing'):
-            changes_file = glob.glob('%s/%s_%s_*.changes' % (self.builder.workspace, self.project.name, self.project.version(branch)))[0]
-        else:
-            changes_file = glob.glob('%s/%s-%s_%s_*.changes' % (self.builder.workspace, self.project.name, branch, self.project.version(branch)))[0]
+        changes_file = glob.glob('%s/%s_%s_*.changes' % (self.builder.workspace, self.project.name, self.project.version(branch)))[0]
         distribution, files = self.parse_changes(changes_file)
         self.upload_files(distribution, files)
         upload_file = changes_file.replace('.changes', '.upload')

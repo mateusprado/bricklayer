@@ -60,7 +60,7 @@ class BricklayerFactory(protocol.ServerFactory):
 
     def sched_projects(self):
         sched_task = task.LoopingCall(self.sched_builder)
-        sched_task.start(200.0)
+        sched_task.start(30.0)
 
 brickconfig = BrickConfig()
 bricklayer = service.MultiService()

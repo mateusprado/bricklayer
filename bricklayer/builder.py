@@ -86,11 +86,11 @@ class Builder:
             for branch in branches:
                 log.debug("Checking project: %s" % self.project.name)
                 try:
-                    if os.path.isdir(self.git.workdir):
-                        self.git.pull()
-                        self.git.checkout_branch(branch)
-                    else:
+                    if not os.path.isdir(self.git.workdir):
                         self.git.clone(branch)
+                    else:
+                        self.git.checkout_tag(tag=".")
+                        self.git.pull()
                 except Exception, e:
                     log.exception('Could not clone or update repository')
                     raise

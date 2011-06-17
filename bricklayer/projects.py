@@ -1,22 +1,17 @@
 import redis
+from model_base import ModelBase, transaction
+from groups import Groups
 
-def transaction(method):
-    def new(*args, **kwargs):
-        args[0].redis_cli = args[0].connect()
-        ret = method(*args, **kwargs)
-        args[0].redis_cli.connection.disconnect()
-        if ret == None:
-            ret = ""
-        return ret
-    return new
+class Projects(ModelBase):
+    
+    namespace = 'project'
 
-class Projects:
-
-    def __init__(self, name='', git_url='', install_cmd='', build_cmd='', version='', release=''):
+    def __init__(self, name='', git_url='', install_cmd='', build_cmd='', version='', release='', group_name=''):
         self.name = name
         self.git_url = git_url
         self.install_cmd = install_cmd
         self.build_cmd = build_cmd
+        self.group_name = group_name
         if version:
             self.version(version=version)
         self.release = release
@@ -25,38 +20,9 @@ class Projects:
         self.install_prefix = ''
         self.populate(self.name)
         self.redis_cli = None
-    
-    @transaction
-    def exists(self):
-        res = self.redis_cli.exists('project:%s' % self.name)
-        return res
-
-    @transaction
-    def delete(self):
-        project_keys = self.redis_cli.keys("*%s*" % self.name)
-        for key in project_keys:
-            self.redis_cli.delete(key)
-
-    def connect(self):
-        return redis.Redis()
 
     def __dir__(self):
-        return ['name', 'git_url', 'install_cmd', 'build_cmd', 'email', 'username', 'release']
-    
-    @transaction
-    def save(self):
-        data = {}
-        for attr in self.__dir__():
-            data[attr] = getattr(self, attr)
-        self.redis_cli.hmset("project:%s" % self.name, data)
-        self.populate(self.name)
-    
-    @transaction
-    def populate(self, name):
-        res = self.redis_cli.hgetall("project:%s" % name)
-        for key, val in res.iteritems():
-            key = key.replace('project:', '')
-            setattr(self, key, val)
+        return ['name', 'git_url', 'install_cmd', 'build_cmd', 'email', 'username', 'release', 'group_name']
     
     @transaction
     def add_branch(self, branch):
@@ -68,16 +34,11 @@ class Projects:
         self.redis_cli.lrem('branches:%s' % self.name, index)
     
     @transaction
-    def repository(self, repository='', user='', passwd=''):
-        if repository and user and passwd:
-            res = self.redis_cli.set("repository:%s" % self.name, repository)
-            self.redis_cli.set("repository:%s:user" % self.name, user) 
-            self.redis_cli.set("repository:%s:passwd" % self.name, passwd) 
-        else:
-            res = []
-            res.append(self.redis_cli.get("repository:%s" % self.name))
-            res.append(self.redis_cli.get("repository:%s:user" % self.name))
-            res.append(self.redis_cli.get("repository:%s:passwd" % self.name))
+    def repository(self):
+        group = Groups(self.group_name)
+        res = []
+        for attr in ('repo_addr', 'repo_user', 'repo_passwd'):
+            res.append(getattr(group, attr))
         return res
 
     @transaction
@@ -115,11 +76,11 @@ class Projects:
     def get_all(self):
         connection_obj = Projects()
         redis_cli = connection_obj.connect()
-        keys = redis_cli.keys('project:*')
+        keys = redis_cli.keys('%s:*' % self.namespace)
         projects = []
         redis_cli.connection.disconnect()
         for key in keys:
-            key = key.replace('project:', '')
+            key = key.replace('%s:' % self.namespace, '')
             projects.append(Projects(key)) 
         return projects
 

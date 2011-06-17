@@ -4,6 +4,7 @@ import sys
 
 sys.path.append(os.path.dirname(__file__))
 from projects import Projects
+from groups import Groups
 from builder import Builder
 from build_info import BuildInfo
 from config import BrickConfig
@@ -34,20 +35,15 @@ class Project(cyclone.web.RequestHandler):
             try:
                 project.add_branch(self.get_argument('branch'))
                 project.version(self.get_argument('branch'), self.get_argument('version'))
+                project.group_name = self.get_argument('group_name')
                 project.save()
-                if self.request.arguments.has_key('repository_url'):
-                    project.repository(
-                            self.request.arguments['repository_url'][0], 
-                            self.request.arguments['repository_user'][0], 
-                            self.request.arguments['repository_passwd'][0]
-                        )
                 log.msg('Project created:', project.name)
                 reactor.callInThread(queue.enqueue, 'build', 'builder.build_project', {'project': project.name, 'branch': self.get_argument('branch'), 'force': True})
+                self.write(cyclone.escape.json_encode({'status': 'ok'}))
             except Exception, e:
                 log.err()
                 self.write(cyclone.escape.json_encode({'status': "fail"}))
 
-            self.write(cyclone.escape.json_encode({'status': 'ok'}))
         else:
             self.write(cyclone.escape.json_encode({'status':  "Project already exists"}))
 
@@ -147,19 +143,6 @@ class Build(cyclone.web.RequestHandler):
             builds.append({'build': int(bid), 'log': os.path.basename(build.log()), 'version': build.version(), 'date': build.time()})
         self.write(cyclone.escape.json_encode(builds))
 
-class Repository(cyclone.web.RequestHandler):
-    def post(self, name):
-        branch = 'master'
-        project = Projects(name)
-        try:
-            project.repository(
-                self.get_argument('repository_url'),
-                self.get_argument('repository_user'),
-                self.get_argument('repository_passwd'))
-        except Exception, e:
-            log.err()
-            
-
 class Log(cyclone.web.RequestHandler):
     def get(self, project, build):
         build_info = BuildInfo(project, build)
@@ -172,6 +155,27 @@ class Check(cyclone.web.RequestHandler):
         builder = Builder(project_name)
         builder.build_project()
 
+class Group(cyclone.web.RequestHandler):
+    def post(self, *args):
+        group = Groups(self.get_argument('name'))
+        group.repo_addr = self.get_argument('repo_addr')
+        group.repo_user = self.get_argument('repo_user')
+        group.repo_passwd = self.get_argument('repo_passwd')
+        group.save()
+
+    def get(self, name):
+        if name:
+            groups = [Groups(name)]
+        else:
+            groups = Groups.get_all()
+        groups_json = []
+        for group in groups:
+            group_json = {}
+            for attr in ('name', 'repo_addr', 'repo_user', 'repo_passwd'):
+                group_json.update({attr: getattr(group, attr)})
+            groups_json.append(group_json)
+        self.write(cyclone.escape.json_encode(groups_json))
+
 class Main(cyclone.web.RequestHandler):
     def get(self):
         self.redirect('/static/index.html')
@@ -182,8 +186,8 @@ restApp = cyclone.web.Application([
     (r'/project/?(.*)', Project),
     (r'/branch/(.*)', Branch),
     (r'/build/(.*)', Build),
+    (r'/group/?(.*)', Group),
     (r'/log/(.*)/(.*)', Log),
-    (r'/repository/(.*)', Repository),
     (r'/static/(.*)', cyclone.web.StaticFileHandler, {'path': brickconfig.get('static', 'dir')}),
     (r'/repo/(.*)', cyclone.web.StaticFileHandler, {'path': brickconfig.get('workspace', 'dir')}),
     (r'/', Main),

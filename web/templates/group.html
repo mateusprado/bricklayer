@@ -1,0 +1,32 @@
+<section class="main-section">
+    <div class="main">
+        <header class="main-header">
+            <h2> Groups </h2>
+            <button id="create">Create group</button>
+        </header>
+        <table class="tablesorter groups-table">
+            <thead>
+                <tr>
+                    <th>Group</th>
+                    <th>User</th>
+                    <th>Repository</th>
+                </tr>
+            </thead>
+            <tbody>
+            {{#items}}
+            <tr class="groups">
+                <td class="name">
+                    <span><a href="#">{{ name }}</a></span>
+                </td>
+                <td class="user">
+                    <span>{{ repo_user }}</span>
+                </td>
+                <td class="host">
+                    <span>{{ repo_addr }}</span>
+                </td>
+            </tr>
+            {{/items}}
+            </tbody>
+        </table>
+    </div>
+</section>
