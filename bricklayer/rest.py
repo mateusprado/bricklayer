@@ -148,7 +148,7 @@ class Build(cyclone.web.RequestHandler):
         project = project_name
         build_ids = BuildInfo(project, -1).builds()
         builds = []
-        for bid in build_ids[:10]:
+        for bid in build_ids[-10:]:
             build = BuildInfo(project, bid)
             builds.append({'build': int(bid), 'log': os.path.basename(build.log()), 'version': build.version(), 'date': build.time()})
         self.write(cyclone.escape.json_encode(builds))
