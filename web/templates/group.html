@@ -4,25 +4,29 @@
             <h2> Groups </h2>
             <button id="create">Create group</button>
         </header>
-        <table class="tablesorter groups-table">
+        <table class="groups-table tablesorter">
             <thead>
                 <tr>
                     <th>Group</th>
                     <th>User</th>
                     <th>Repository</th>
+                    <th>Password (change)</th>
                 </tr>
             </thead>
             <tbody>
             {{#items}}
             <tr class="groups">
                 <td class="name">
-                    <span><a href="#">{{ name }}</a></span>
-                </td>
-                <td class="user">
-                    <span>{{ repo_user }}</span>
+                    <span id="name">{{ name }}</a></span>
                 </td>
                 <td class="host">
-                    <span>{{ repo_addr }}</span>
+                    <span class="edit" id="repo_addr" group="{{ name }}">{{ repo_addr }}</span>
+                </td>
+                <td class="user">
+                    <span class="edit" id="repo_user" group="{{ name }}">{{ repo_user }}</span>
+                </td>
+                <td class="passwd">
+                    <span class="edit" id="repo_passwd" group="{{ name }}">*******</span>
                 </td>
             </tr>
             {{/items}}

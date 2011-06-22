@@ -121,7 +121,11 @@ table.projects-table td.name strong.name {
 .groups a {
     color: #999;
 }
-    
+
+table.groups-table {
+    padding: 30px;
+}
+
 table.list {
     padding: 20px;
     width: 100%;

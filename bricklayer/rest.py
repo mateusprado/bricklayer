@@ -22,6 +22,14 @@ queue = Dreque(brickconfig.get('redis', 'redis-server'))
 
 class Project(cyclone.web.RequestHandler):
     def post(self, *args):
+        if args[0]:
+            name = args[0]
+            project = Projects(name)
+            for key, value in self.request.arguments.iteritems():
+                if key in ("git_url", "version", "build_cmd", "install_cmd"):
+                    setattr(project, key, value[0])
+            project.save()
+
         try:
             if not Projects(self.get_argument('name')).exists():
                 raise
@@ -138,7 +146,7 @@ class Build(cyclone.web.RequestHandler):
         project = project_name
         build_ids = BuildInfo(project, -1).builds()
         builds = []
-        for bid in build_ids:
+        for bid in build_ids[:10]:
             build = BuildInfo(project, bid)
             builds.append({'build': int(bid), 'log': os.path.basename(build.log()), 'version': build.version(), 'date': build.time()})
         self.write(cyclone.escape.json_encode(builds))
@@ -157,14 +165,24 @@ class Check(cyclone.web.RequestHandler):
 
 class Group(cyclone.web.RequestHandler):
     def post(self, *args):
-        group = Groups(self.get_argument('name'))
-        group.repo_addr = self.get_argument('repo_addr')
-        group.repo_user = self.get_argument('repo_user')
-        group.repo_passwd = self.get_argument('repo_passwd')
-        group.save()
+        if args[0]:
+            name = args[0]
+            group = Groups(name)
+            for key, value in self.request.arguments.iteritems():
+                if key in ("repo_addr", "repo_user", "repo_passwd"):
+                    setattr(group, key, value[0])
+            group.save()
+        else:
+            group = Groups(self.get_argument('name'))
+            group.repo_addr = self.get_argument('repo_addr')
+            group.repo_user = self.get_argument('repo_user')
+            group.repo_passwd = self.get_argument('repo_passwd')
+            group.save()
+    
 
-    def get(self, name):
-        if name:
+    def get(self, *args):
+        if len(args) > 1:
+            name = args[0]
             groups = [Groups(name)]
         else:
             groups = Groups.get_all()

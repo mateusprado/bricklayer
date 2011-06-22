@@ -44,6 +44,16 @@ $(function(){
 
                 switch(section) {
                     case 'group':
+                            $(".edit").editInPlace({
+                                callback : function(unused, enteredText) { 
+                                    console.log($(this).attr("id") + " " + enteredText);
+                                    $.ajax("/group/" + $(this).attr("group"), {
+                                        type: "POST", 
+                                        data: "edit=true&" + $(this).attr("id") + "=" + enteredText
+                                    });
+                                    return enteredText; 
+                                }
+                            });
                         break;
 
                     case 'project':
