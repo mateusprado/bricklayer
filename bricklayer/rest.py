@@ -78,6 +78,7 @@ class Project(cyclone.web.RequestHandler):
                     project = Projects(name)
                     reply = {'name': project.name, 
                             'branch': project.branches(),
+                            'group_name': project.group_name,
                             'git_url': project.git_url, 
                             'version': project.version(),
                             'last_tag_testing': project.last_tag(tag_type='testing'),
@@ -92,6 +93,7 @@ class Project(cyclone.web.RequestHandler):
                     reply.append(
                             {'name': project.name, 
                             'branch': project.branches(),
+                            'group_name': project.group_name,
                             'git_url': project.git_url, 
                             'version': project.version(),
                             'last_tag_testing': project.last_tag(tag_type='testing'),
