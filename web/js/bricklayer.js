@@ -63,9 +63,9 @@ $(function(){
                             $("select#group_name").append("<option>" + groups_select[i].name + "</option>");
                         }
 
-                        $("a[id^='show-']").each(function() {
+                        $("a[id^='show_']").each(function() {
                             $(this).click(function () { 
-                                show_details('project', $(this).attr("id").split("-")[1]);
+                                show_details('project', $(this).attr("id").split("_")[1]);
                             }); 
                         });
 
