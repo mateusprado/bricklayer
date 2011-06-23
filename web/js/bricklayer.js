@@ -37,7 +37,15 @@ $(function(){
             dataType: "json",
             success: function(data) {
                 var template = $.ajax({url:"/static/templates/" + section + ".html", async: false}).responseText;
-                $("#content").html($.mustache(template, { items : data } ));
+                $("#content").html($.mustache(template, { items : data.sort(function(a, b) { 
+                    if (a['name'] < b['name']) {
+                        return -1;
+                    } else {
+                        return 1;
+                    } 
+                    if (a['name'] == b['name']) 
+                        return 0;
+                }) } ));
                 $("#create").button().click(function() {
                         $("div[id="+ section +"-form]").dialog("open");
                 });
