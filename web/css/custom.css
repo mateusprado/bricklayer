@@ -98,16 +98,23 @@ header.main-header button {
     right: 30px;
 }
 
-table.projects-table td.name strong.name {
+td.name strong.name {
   color: #111;
   font-size: 16px;
 }
 
-.projects-table td.tags {
-    width: 150px;
+td.tags {
+    width: 130px;
     padding: 4px;
     text-align: center;
 }
+
+
+td.git_url {
+    margin: 0;
+    padding: 0;
+}
+
 
 .project-details {
     font-color: #3d3d3d;
