@@ -148,7 +148,7 @@ class DebBuilder():
 
         os.chmod(os.path.join(debian_dir, 'rules'), stat.S_IRWXU|stat.S_IRWXG|stat.S_IROTH|stat.S_IXOTH)
         dpkg_cmd = self.builder._exec(
-                ['dpkg-buildpackage',  '-rfakeroot', '-k%s' % BrickConfig().get('gpg', 'keyid')],
+                ['dpkg-buildpackage',  '-rfakeroot', '-tc', '-k%s' % BrickConfig().get('gpg', 'keyid')],
                 cwd=self.builder.workdir, env=rvm_env, stdout=self.stdout, stderr=self.stderr
         )
         
