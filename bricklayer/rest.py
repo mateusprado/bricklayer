@@ -22,7 +22,7 @@ queue = Dreque(brickconfig.get('redis', 'redis-server'))
 
 class Project(cyclone.web.RequestHandler):
     def post(self, *args):
-        if args[0]:
+        if len(args) >= 1:
             name = args[0]
             project = Projects(name)
             for key, value in self.request.arguments.iteritems():
