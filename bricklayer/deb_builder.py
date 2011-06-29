@@ -100,7 +100,7 @@ class DebBuilder():
             """
             otherwise it should change the distribution to unstable
             """
-            changelog_data.update({'version': self.project.version('testing'), 'branch': 'unstable'})
+            changelog_data.update({'version': self.project.version(branch), 'branch': 'unstable'})
             if self.project.version(branch):
                 version_list = self.project.version(branch).split('.')
                 version_list[len(version_list) - 1] = str(int(version_list[len(version_list) - 1]) + 1)
