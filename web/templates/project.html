@@ -8,16 +8,16 @@
             <tbody>
             {{#items}}
             <tr class="project">
-                <td class="name">
-                    <span><a id="show_{{ name }}" href="javascript:"><strong class="name">{{ name }}</strong></a></span>
-                </td>    
-                <td class="git_url">
-                    <span>{{ git_url }}</span>
-                    <div id="project-{{ name }}-details" title="{{ name }} details" style="display: none;"></div>
-                </td>
-                <td class="tags">
-                    <span><strong>{{ last_tag_testing }}</strong></span>
-                    <span><strong>{{ last_tag_stable }}</strong></span>
+                <td>
+                    <a class="name" id="show_{{ name }}" href="javascript:">{{ name }}</a><br>
+                    <strong class="url">{{ git_url }}</strong>
+
+                    <ul class="tags">
+                        <li>{{ last_tag_testing }}</li>
+                        <li>{{ last_tag_stable }}</li>
+                    </ul>
+
+                    <div class="details" id="project-{{ name }}-details"></div>
                 </td>
             </tr>
             {{/items}}

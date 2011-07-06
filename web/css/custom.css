@@ -98,27 +98,33 @@ header.main-header button {
     right: 30px;
 }
 
-td.name strong.name {
+a.name {
   color: #111;
   font-size: 16px;
+  font-weight: bold;
+  text-decoration: none;
 }
 
-td.tags {
-    width: 130px;
-    padding: 4px;
-    text-align: center;
+tr:hover a.name {
+    text-decoration: underline;
 }
 
-
-td.git_url {
-    margin: 0;
-    padding: 0;
+.url {
+    color: #999;
+    font-weight: normal;
+    display: inline-block;
 }
 
+tr.project td {
+    overflow: hidden;
+}
 
-.project-details {
-    font-color: #3d3d3d;
-    font-size: 10px;
+.tags {
+    color: #aaa;
+    font-weight: bold;
+    float: right;
+    margin-top: -15px;
+    list-style: none;
 }
 
 .build-log a {
@@ -127,6 +133,21 @@ td.git_url {
 
 .groups a {
     color: #999;
+}
+
+.name a {
+    text-decoration: none;
+}
+
+.details {
+    display: none;
+    clear: both;
+    color: #999;
+    font-size: 10px;
+}
+
+.details .tablesorter {
+    margin-bottom: -10px;
 }
 
 table.groups-table {
@@ -138,7 +159,7 @@ table.list {
     width: 100%;
 }
 
-table.list td {
+table.list tr > td {
     border-bottom: 1px solid #ddd;
     padding: 10px;
 }
