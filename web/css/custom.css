@@ -113,6 +113,7 @@ tr:hover a.name {
     color: #999;
     font-weight: normal;
     display: inline-block;
+    width: 530px;
 }
 
 tr.project td {
