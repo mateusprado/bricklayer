@@ -11,6 +11,8 @@ sys.path.append(os.path.dirname(__file__))
 
 import pystache
 import git
+
+from twisted.internet import threads
 from config import BrickConfig
 from projects import Projects
 
@@ -28,6 +30,8 @@ def build_project(kargs):
 
     builder = Builder(project)
     builder.build_project(force, branch)
+    defered = threads.deferToThread(builder.build_project, force, branch)
+
 
 class Builder:
     def __init__(self, project):
