@@ -105,7 +105,7 @@ class DebBuilder():
                 version_list[len(version_list) - 1] = str(int(version_list[len(version_list) - 1]) + 1)
                 self.project.version(branch, '.'.join(version_list))
 
-            changelog_data.update({'version': self.project.version(branch), 'branch': 'unstable'})
+                changelog_data.update({'version': self.project.version(branch), 'branch': 'unstable'})
             self.build_info.version(self.project.version(branch))
 
         open(os.path.join(self.builder.workdir, 'debian', 'changelog'), 'w').write(changelog_entry % changelog_data)
